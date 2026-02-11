@@ -45,6 +45,10 @@ import com.termux.view.textselection.TextSelectionCursorController;
 /** View displaying and interacting with a {@link TerminalSession}. */
 public final class TerminalView extends View {
 
+    public interface OnUserInputListener {
+        void onUserInput();
+    }
+
     /** Log terminal view key and IME events. */
     private static boolean TERMINAL_VIEW_KEY_LOGGING_ENABLED = false;
 
@@ -132,6 +136,17 @@ public final class TerminalView extends View {
     public final static int KEY_EVENT_SOURCE_SOFT_KEYBOARD = 0;
 
     private static final String LOG_TAG = "TerminalView";
+
+    @Nullable
+    private OnUserInputListener mOnUserInputListener;
+
+    public void setOnUserInputListener(@Nullable OnUserInputListener onUserInputListener) {
+        mOnUserInputListener = onUserInputListener;
+    }
+
+    private void notifyUserInput() {
+        if (mOnUserInputListener != null) mOnUserInputListener.onUserInput();
+    }
 
     public TerminalView(Context context, AttributeSet attributes) { // NO_UCD (unused code)
         super(context, attributes);
@@ -770,6 +785,7 @@ public final class TerminalView extends View {
         if (TERMINAL_VIEW_KEY_LOGGING_ENABLED)
             mClient.logInfo(LOG_TAG, "onKeyDown(keyCode=" + keyCode + ", isSystem()=" + event.isSystem() + ", event=" + event + ")");
         if (mEmulator == null) return true;
+        if (event.getDeviceId() != KEY_EVENT_SOURCE_VIRTUAL_KEYBOARD) notifyUserInput();
         if (isSelectingText()) {
             stopTextSelectionMode();
         }
@@ -848,6 +864,7 @@ public final class TerminalView extends View {
         }
 
         if (mTermSession == null) return;
+        if (eventSource == KEY_EVENT_SOURCE_SOFT_KEYBOARD) notifyUserInput();
 
         // Ensure cursor is shown when a key is pressed down like long hold on (arrow) keys
         if (mEmulator != null)

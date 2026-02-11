@@ -1,0 +1,16 @@
+#!/usr/bin/env sh
+set -eu
+
+PREFIX="${PREFIX:-/data/data/com.termux/files/usr}"
+JAVA_HOME="$PREFIX/lib/jvm/java-17-openjdk"
+
+if [ ! -x "$JAVA_HOME/bin/java" ]; then
+  echo "Java 17 not found at $JAVA_HOME (install with: pkg install openjdk-17)" >&2
+  exit 1
+fi
+
+export JAVA_HOME
+export PATH="$JAVA_HOME/bin:$PATH"
+
+exec "$(dirname "$0")/gradlew" "$@"
+

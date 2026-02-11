@@ -27,6 +27,11 @@ import org.json.JSONObject;
  * key. This can be done by replacing `key` key/value pair of the dict with a `macro` key/value pair.
  * The syntax is `{macro: 'KEY COMBINATION'}`. For example {macro: 'HOME RIGHT', ...}.
  *
+ * The macro may optionally include delay instructions of the form `SLEEP\\d{1,4}` (uppercase only),
+ * which inserts a delay of N milliseconds during macro replay. For example `SLEEP250` waits 250ms.
+ * A running sleep-macro is cancelled by any user input (including hardware keyboard and volume key
+ * presses) or by tapping any extra-keys button.
+ *
  * In advance json dict mode, you can define a nested json dict with the `popup` key which will be
  * used as the popup key and will be triggered on swipe up. The syntax can be
  * `{key: 'KEY', popup: 'POPUP_KEY'}` or `{key: 'KEY', popup: {macro: 'KEY COMBINATION', display: 'Key combo'}}`.
