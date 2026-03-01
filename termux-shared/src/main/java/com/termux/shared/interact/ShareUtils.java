@@ -4,12 +4,15 @@ import android.Manifest;
 import android.app.Activity;
 import android.content.ActivityNotFoundException;
 import android.content.ClipData;
+import android.content.ClipDescription;
 import android.content.ClipboardManager;
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
+import android.webkit.MimeTypeMap;
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -21,7 +24,13 @@ import com.termux.shared.logger.Logger;
 import com.termux.shared.errors.Error;
 import com.termux.shared.android.PermissionUtils;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.InputStream;
 import java.nio.charset.Charset;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
 
 import javax.annotation.Nullable;
 
@@ -152,6 +161,62 @@ public class ShareUtils {
         if (clipItem == null) return null;
 
         return coerceToText ? clipItem.coerceToText(context) : clipItem.getText();
+    }
+
+    /**
+     * Save an image from the clipboard to a file in the specified directory.
+     *
+     * @param context The context for operations.
+     * @param destDir The directory to save the image file to.
+     * @return Returns the absolute file path of the saved image, or {@code null} if the clipboard
+     * does not contain an image or saving failed.
+     */
+    @Nullable
+    public static String saveImageFromClipboard(Context context, String destDir) {
+        if (context == null || destDir == null) return null;
+
+        ClipboardManager clipboardManager = (ClipboardManager) context.getSystemService(Context.CLIPBOARD_SERVICE);
+        if (clipboardManager == null) return null;
+
+        ClipData clipData = clipboardManager.getPrimaryClip();
+        if (clipData == null) return null;
+
+        ClipDescription description = clipData.getDescription();
+        if (description == null || !description.hasMimeType("image/*")) return null;
+
+        ClipData.Item clipItem = clipData.getItemAt(0);
+        if (clipItem == null) return null;
+
+        Uri uri = clipItem.getUri();
+        if (uri == null) return null;
+
+        try {
+            ContentResolver resolver = context.getContentResolver();
+            String mimeType = resolver.getType(uri);
+            if (mimeType == null || !mimeType.startsWith("image/")) return null;
+
+            String extension = MimeTypeMap.getSingleton().getExtensionFromMimeType(mimeType);
+            if (extension == null) extension = "png";
+
+            String timestamp = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(new Date());
+            String filename = "clipboard_" + timestamp + "." + extension;
+            File destFile = new File(destDir, filename);
+
+            try (InputStream is = resolver.openInputStream(uri);
+                 FileOutputStream fos = new FileOutputStream(destFile)) {
+                if (is == null) return null;
+                byte[] buffer = new byte[8192];
+                int bytesRead;
+                while ((bytesRead = is.read(buffer)) != -1) {
+                    fos.write(buffer, 0, bytesRead);
+                }
+            }
+
+            return destFile.getAbsolutePath();
+        } catch (Exception e) {
+            Logger.logStackTraceWithMessage(LOG_TAG, "Failed to save image from clipboard", e);
+            return null;
+        }
     }
 
 

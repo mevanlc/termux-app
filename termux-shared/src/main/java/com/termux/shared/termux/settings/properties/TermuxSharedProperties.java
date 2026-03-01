@@ -288,6 +288,8 @@ public abstract class TermuxSharedProperties {
             /* String (may be null) */
             case TermuxPropertyConstants.KEY_BACK_KEY_BEHAVIOUR:
                 return (String) getBackKeyBehaviourInternalPropertyValueFromValue(value);
+            case TermuxPropertyConstants.KEY_CLIPBOARD_IMAGE_PASTE_DIR:
+                return (String) getClipboardImagePasteDirInternalPropertyValueFromValue(value);
             case TermuxPropertyConstants.KEY_DEFAULT_WORKING_DIRECTORY:
                 return (String) getDefaultWorkingDirectoryInternalPropertyValueFromValue(value);
             case TermuxPropertyConstants.KEY_EXTRA_KEYS:
@@ -519,6 +521,24 @@ public abstract class TermuxSharedProperties {
     }
 
     /**
+     * Returns the path itself if a directory exists at it and is writable, otherwise returns
+     * {@link TermuxPropertyConstants#DEFAULT_IVALUE_CLIPBOARD_IMAGE_PASTE_DIR}.
+     *
+     * @param path The {@link String} path to check.
+     * @return Returns the internal value for value.
+     */
+    public static String getClipboardImagePasteDirInternalPropertyValueFromValue(String path) {
+        if (path == null || path.isEmpty()) return TermuxPropertyConstants.DEFAULT_IVALUE_CLIPBOARD_IMAGE_PASTE_DIR;
+        File dir = new File(path);
+        if (!dir.exists() || !dir.isDirectory() || !dir.canWrite()) {
+            Logger.logError(LOG_TAG, "The path \"" + path + "\" for the key \"" + TermuxPropertyConstants.KEY_CLIPBOARD_IMAGE_PASTE_DIR + "\" does not exist, is not a directory or is not writable. Using default value \"" + TermuxPropertyConstants.DEFAULT_IVALUE_CLIPBOARD_IMAGE_PASTE_DIR + "\" instead.");
+            return TermuxPropertyConstants.DEFAULT_IVALUE_CLIPBOARD_IMAGE_PASTE_DIR;
+        } else {
+            return path;
+        }
+    }
+
+    /**
      * Returns the value itself if it is not {@code null}, otherwise returns {@link TermuxPropertyConstants#DEFAULT_IVALUE_EXTRA_KEYS}.
      *
      * @param value The {@link String} value to convert.
@@ -682,6 +702,14 @@ public abstract class TermuxSharedProperties {
 
     public boolean areVirtualVolumeKeysDisabled() {
         return (boolean) TermuxPropertyConstants.IVALUE_VOLUME_KEY_BEHAVIOUR_VOLUME.equals(getInternalPropertyValue(TermuxPropertyConstants.KEY_VOLUME_KEYS_BEHAVIOUR, true));
+    }
+
+    public boolean isClipboardImagePasteEnabled() {
+        return (boolean) getInternalPropertyValue(TermuxPropertyConstants.KEY_CLIPBOARD_IMAGE_PASTE, true);
+    }
+
+    public String getClipboardImagePasteDir() {
+        return (String) getInternalPropertyValue(TermuxPropertyConstants.KEY_CLIPBOARD_IMAGE_PASTE_DIR, true);
     }
 
 

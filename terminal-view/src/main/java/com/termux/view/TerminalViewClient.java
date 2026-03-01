@@ -65,6 +65,8 @@ public interface TerminalViewClient {
 
     void onEmulatorSet();
 
+    void onPasteTextFromClipboard();
+
 
     void logError(String tag, String message);
 

@@ -148,6 +148,11 @@ public final class TermuxPropertyConstants {
 
 
 
+    /** Defines the key for whether clipboard image paste is enabled */
+    public static final String KEY_CLIPBOARD_IMAGE_PASTE =  "clipboard-image-paste"; // Default: "clipboard-image-paste"
+
+
+
     /** Defines the key for whether to use ctrl space workaround to fix the issue where ctrl+space does not work on some ROMs */
     public static final String KEY_USE_CTRL_SPACE_WORKAROUND =  "ctrl-space-workaround"; // Default: "ctrl-space-workaround"
 
@@ -316,6 +321,13 @@ public final class TermuxPropertyConstants {
 
 
 
+    /** Defines the key for the clipboard image paste directory */
+    public static final String KEY_CLIPBOARD_IMAGE_PASTE_DIR =  "clipboard-image-paste-dir"; // Default: "clipboard-image-paste-dir"
+    /** Defines the default clipboard image paste directory */
+    public static final String DEFAULT_IVALUE_CLIPBOARD_IMAGE_PASTE_DIR = TermuxConstants.TERMUX_TMP_PREFIX_DIR_PATH;
+
+
+
     /** Defines the key for the default working directory */
     public static final String KEY_DEFAULT_WORKING_DIRECTORY =  "default-working-directory"; // Default: "default-working-directory"
     /** Defines the default working directory */
@@ -391,6 +403,7 @@ public final class TermuxPropertyConstants {
      * */
     public static final Set<String> TERMUX_APP_PROPERTIES_LIST = new HashSet<>(Arrays.asList(
         /* boolean */
+        KEY_CLIPBOARD_IMAGE_PASTE,
         KEY_DISABLE_FILE_SHARE_RECEIVER,
         KEY_DISABLE_FILE_VIEW_RECEIVER,
         KEY_DISABLE_HARDWARE_KEYBOARD_SHORTCUTS,
@@ -425,6 +438,7 @@ public final class TermuxPropertyConstants {
 
         /* String */
         KEY_BACK_KEY_BEHAVIOUR,
+        KEY_CLIPBOARD_IMAGE_PASTE_DIR,
         KEY_DEFAULT_WORKING_DIRECTORY,
         KEY_EXTRA_KEYS,
         KEY_EXTRA_KEYS_STYLE,
@@ -439,6 +453,7 @@ public final class TermuxPropertyConstants {
      * default: false
      */
     public static final Set<String> TERMUX_DEFAULT_FALSE_BOOLEAN_BEHAVIOUR_PROPERTIES_LIST = new HashSet<>(Arrays.asList(
+        KEY_CLIPBOARD_IMAGE_PASTE,
         KEY_DISABLE_FILE_SHARE_RECEIVER,
         KEY_DISABLE_FILE_VIEW_RECEIVER,
         KEY_DISABLE_HARDWARE_KEYBOARD_SHORTCUTS,
