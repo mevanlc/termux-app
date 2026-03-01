@@ -191,6 +191,14 @@ public class TermuxTerminalSessionActivityClient extends TermuxTerminalSessionCl
     public void onPasteTextFromClipboard(@Nullable TerminalSession session) {
         if (!mActivity.isVisible()) return;
 
+        if (mActivity.getProperties().isClipboardImagePasteEnabled()) {
+            String imagePath = ShareUtils.saveImageFromClipboard(mActivity, mActivity.getProperties().getClipboardImagePasteDir());
+            if (imagePath != null) {
+                mActivity.getTerminalView().mEmulator.paste(imagePath);
+                return;
+            }
+        }
+
         String text = ShareUtils.getTextStringFromClipboardIfSet(mActivity, true);
         if (text != null)
             mActivity.getTerminalView().mEmulator.paste(text);

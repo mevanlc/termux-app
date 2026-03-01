@@ -789,10 +789,23 @@ public class TermuxTerminalViewClient extends TermuxTerminalViewClientBase {
         }.start();
     }
 
+    @Override
+    public void onPasteTextFromClipboard() {
+        mTermuxTerminalSessionActivityClient.onPasteTextFromClipboard(null);
+    }
+
     public void doPaste() {
         TerminalSession session = mActivity.getCurrentSession();
         if (session == null) return;
         if (!session.isRunning()) return;
+
+        if (mActivity.getProperties().isClipboardImagePasteEnabled()) {
+            String imagePath = ShareUtils.saveImageFromClipboard(mActivity, mActivity.getProperties().getClipboardImagePasteDir());
+            if (imagePath != null) {
+                session.getEmulator().paste(imagePath);
+                return;
+            }
+        }
 
         String text = ShareUtils.getTextStringFromClipboardIfSet(mActivity, true);
         if (text != null)
