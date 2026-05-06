@@ -340,6 +340,10 @@ public final class TermuxPropertyConstants {
     //public static final String DEFAULT_IVALUE_EXTRA_KEYS = "[[ESC, TAB, CTRL, ALT, {key: '-', popup: '|'}, DOWN, UP]]"; // Single row
     public static final String DEFAULT_IVALUE_EXTRA_KEYS = "[['ESC','/',{key: '-', popup: '|'},'HOME','UP','END','PGUP'], ['TAB','CTRL','ALT','LEFT','DOWN','RIGHT','PGDN']]"; // Double row
 
+    /** Defines the key for extra keys shown on the left toolbar page */
+    public static final String KEY_EXTRA_KEYS_PAGE_LEFT = "extra-keys-page-left"; // Default: "extra-keys-page-left"
+    public static final String DEFAULT_IVALUE_EXTRA_KEYS_PAGE_LEFT = "[['F1','F2','F3','F4','F5','F6'], ['F7','F8','F9','F10','F11','F12']]";
+
     /** Defines the key for extra keys style */
     public static final String KEY_EXTRA_KEYS_STYLE =  "extra-keys-style"; // Default: "extra-keys-style"
     public static final String DEFAULT_IVALUE_EXTRA_KEYS_STYLE = "default";
@@ -441,6 +445,7 @@ public final class TermuxPropertyConstants {
         KEY_CLIPBOARD_IMAGE_PASTE_DIR,
         KEY_DEFAULT_WORKING_DIRECTORY,
         KEY_EXTRA_KEYS,
+        KEY_EXTRA_KEYS_PAGE_LEFT,
         KEY_EXTRA_KEYS_STYLE,
         KEY_NIGHT_MODE,
         KEY_SOFT_KEYBOARD_TOGGLE_BEHAVIOUR,

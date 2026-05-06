@@ -129,6 +129,11 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
     ExtraKeysView mExtraKeysView;
 
     /**
+     * The terminal extra keys view for the left toolbar page.
+     */
+    ExtraKeysView mExtraKeysViewPageLeft;
+
+    /**
      * The client for the {@link #mExtraKeysView}.
      */
     TermuxTerminalExtraKeys mTermuxTerminalExtraKeys;
@@ -525,6 +530,7 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
 
         terminalToolbarViewPager.setAdapter(new TerminalToolbarViewPager.PageAdapter(this, savedTextInput));
         terminalToolbarViewPager.addOnPageChangeListener(new TerminalToolbarViewPager.OnPageChangeListener(this, terminalToolbarViewPager));
+        terminalToolbarViewPager.setCurrentItem(TerminalToolbarViewPager.PAGE_EXTRA_KEYS, false);
     }
 
     private void setTerminalToolbarHeight() {
@@ -533,9 +539,18 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
 
         ViewGroup.LayoutParams layoutParams = terminalToolbarViewPager.getLayoutParams();
         layoutParams.height = Math.round(mTerminalToolbarDefaultHeight *
-            (mTermuxTerminalExtraKeys.getExtraKeysInfo() == null ? 0 : mTermuxTerminalExtraKeys.getExtraKeysInfo().getMatrix().length) *
+            getTerminalToolbarExtraKeysRowCount() *
             mProperties.getTerminalToolbarHeightScaleFactor());
         terminalToolbarViewPager.setLayoutParams(layoutParams);
+    }
+
+    private int getTerminalToolbarExtraKeysRowCount() {
+        int rowCount = 0;
+        if (mTermuxTerminalExtraKeys.getExtraKeysInfoPageLeft() != null)
+            rowCount = Math.max(rowCount, mTermuxTerminalExtraKeys.getExtraKeysInfoPageLeft().getMatrix().length);
+        if (mTermuxTerminalExtraKeys.getExtraKeysInfo() != null)
+            rowCount = Math.max(rowCount, mTermuxTerminalExtraKeys.getExtraKeysInfo().getMatrix().length);
+        return rowCount;
     }
 
     public void toggleTerminalToolbar() {
@@ -833,6 +848,10 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
         mExtraKeysView = extraKeysView;
     }
 
+    public void setExtraKeysViewPageLeft(ExtraKeysView extraKeysViewPageLeft) {
+        mExtraKeysViewPageLeft = extraKeysViewPageLeft;
+    }
+
     public DrawerLayout getDrawer() {
         return (DrawerLayout) findViewById(R.id.drawer_layout);
     }
@@ -847,11 +866,11 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
     }
 
     public boolean isTerminalViewSelected() {
-        return getTerminalToolbarViewPager().getCurrentItem() == 0;
+        return getTerminalToolbarViewPager().getCurrentItem() != TerminalToolbarViewPager.PAGE_TEXT_INPUT;
     }
 
     public boolean isTerminalToolbarTextInputViewSelected() {
-        return getTerminalToolbarViewPager().getCurrentItem() == 1;
+        return getTerminalToolbarViewPager().getCurrentItem() == TerminalToolbarViewPager.PAGE_TEXT_INPUT;
     }
 
 
@@ -968,6 +987,12 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
     private void reloadActivityStyling(boolean recreateActivity) {
         if (mProperties != null) {
             reloadProperties();
+            mTermuxTerminalExtraKeys.reloadExtraKeys();
+
+            if (mExtraKeysViewPageLeft != null) {
+                mExtraKeysViewPageLeft.setButtonTextAllCaps(mProperties.shouldExtraKeysTextBeAllCaps());
+                mExtraKeysViewPageLeft.reload(mTermuxTerminalExtraKeys.getExtraKeysInfoPageLeft(), mTerminalToolbarDefaultHeight);
+            }
 
             if (mExtraKeysView != null) {
                 mExtraKeysView.setButtonTextAllCaps(mProperties.shouldExtraKeysTextBeAllCaps());
