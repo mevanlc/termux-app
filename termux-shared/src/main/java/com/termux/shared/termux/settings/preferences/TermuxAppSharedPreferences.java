@@ -160,13 +160,27 @@ public class TermuxAppSharedPreferences extends AppSharedPreferences {
         SharedPreferenceUtils.setIntStoredAsString(mSharedPreferences, TERMUX_APP.KEY_FONTSIZE, value, false);
     }
 
-    public void changeFontSize(boolean increase) {
-        int fontSize = getFontSize();
+    public int clampFontSize(int fontSize) {
+        return DataUtils.clamp(fontSize, MIN_FONTSIZE, MAX_FONTSIZE);
+    }
 
+    public int getChangedFontSize(int fontSize, boolean increase) {
         fontSize += (increase ? 1 : -1) * 2;
-        fontSize = Math.max(MIN_FONTSIZE, Math.min(fontSize, MAX_FONTSIZE));
+        return clampFontSize(fontSize);
+    }
 
+    public int changeFontSize(boolean increase) {
+        int fontSize = getChangedFontSize(getFontSize(), increase);
         setFontSize(fontSize);
+        return fontSize;
+    }
+
+    public boolean isZoomPerSessionEnabled() {
+        return SharedPreferenceUtils.getBoolean(mSharedPreferences, TERMUX_APP.KEY_ZOOM_PER_SESSION, TERMUX_APP.DEFAULT_VALUE_ZOOM_PER_SESSION);
+    }
+
+    public void setZoomPerSessionEnabled(boolean value) {
+        SharedPreferenceUtils.setBoolean(mSharedPreferences, TERMUX_APP.KEY_ZOOM_PER_SESSION, value, false);
     }
 
 

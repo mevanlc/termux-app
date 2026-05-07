@@ -132,6 +132,13 @@ public final class TermuxPreferenceConstants {
 
 
         /**
+         * Defines the key for whether terminal zoom level is stored per session.
+         */
+        public static final String KEY_ZOOM_PER_SESSION = "zoom-per-session";
+        public static final boolean DEFAULT_VALUE_ZOOM_PER_SESSION = false;
+
+
+        /**
          * Defines the key for current termux terminal session.
          */
         public static final String KEY_CURRENT_SESSION = "current_session";

@@ -28,6 +28,7 @@ import com.termux.shared.termux.terminal.TermuxTerminalViewClientBase;
 import com.termux.shared.termux.extrakeys.SpecialButton;
 import com.termux.shared.android.AndroidUtils;
 import com.termux.shared.termux.TermuxConstants;
+import com.termux.shared.termux.shell.command.runner.terminal.TermuxSession;
 import com.termux.shared.activities.ReportActivity;
 import com.termux.shared.models.ReportInfo;
 import com.termux.app.models.UserAction;
@@ -104,6 +105,8 @@ public class TermuxTerminalViewClient extends TermuxTerminalViewClientBase {
         // Piggyback on the terminal view key logging toggle for now, should add a separate toggle in future
         mActivity.getTermuxActivityRootView().setIsRootViewLoggingEnabled(isTerminalViewKeyLoggingEnabled);
         ViewUtils.setIsViewUtilsLoggingEnabled(isTerminalViewKeyLoggingEnabled);
+
+        mTermuxTerminalSessionActivityClient.applyCurrentSessionFontSize();
     }
 
     /**
@@ -517,8 +520,24 @@ public class TermuxTerminalViewClient extends TermuxTerminalViewClientBase {
 
 
     public void changeFontSize(boolean increase) {
-        mActivity.getPreferences().changeFontSize(increase);
-        mActivity.getTerminalView().setTextSize(mActivity.getPreferences().getFontSize());
+        int fontSize;
+        if (mActivity.getPreferences().isZoomPerSessionEnabled()) {
+            TermuxSession termuxSession = getCurrentTermuxSession();
+            fontSize = mActivity.getPreferences().getChangedFontSize(
+                mTermuxTerminalSessionActivityClient.getFontSizeForTermuxSession(termuxSession), increase);
+            if (termuxSession != null)
+                termuxSession.setFontSize(fontSize);
+        } else {
+            fontSize = mActivity.getPreferences().changeFontSize(increase);
+        }
+
+        mActivity.getTerminalView().setTextSize(fontSize);
+    }
+
+    private TermuxSession getCurrentTermuxSession() {
+        if (mActivity.getTermuxService() == null) return null;
+
+        return mActivity.getTermuxService().getTermuxSessionForTerminalSession(mActivity.getCurrentSession());
     }
 
 

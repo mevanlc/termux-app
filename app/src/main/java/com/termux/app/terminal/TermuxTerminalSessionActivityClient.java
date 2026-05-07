@@ -301,7 +301,7 @@ public class TermuxTerminalSessionActivityClient extends TermuxTerminalSessionCl
     public void setCurrentSession(TerminalSession session) {
         if (session == null) return;
 
-        if (mActivity.getTerminalView().attachSession(session)) {
+        if (mActivity.getTerminalView().attachSession(session, getFontSizeForSession(session))) {
             // notify about switched session if not already displaying the session
             notifyOfSessionChange();
         }
@@ -348,6 +348,29 @@ public class TermuxTerminalSessionActivityClient extends TermuxTerminalSessionCl
             setCurrentSession(termuxSession.getTerminalSession());
     }
 
+    public int getFontSizeForSession(TerminalSession session) {
+        if (!mActivity.getPreferences().isZoomPerSessionEnabled())
+            return mActivity.getPreferences().getFontSize();
+
+        TermuxService service = mActivity.getTermuxService();
+        TermuxSession termuxSession = service == null ? null : service.getTermuxSessionForTerminalSession(session);
+        return getFontSizeForTermuxSession(termuxSession);
+    }
+
+    public int getFontSizeForTermuxSession(TermuxSession termuxSession) {
+        Integer fontSize = termuxSession == null ? null : termuxSession.getFontSize();
+        return fontSize == null ? mActivity.getPreferences().getFontSize() : mActivity.getPreferences().clampFontSize(fontSize);
+    }
+
+    public void applyCurrentSessionFontSize() {
+        TerminalSession session = mActivity.getCurrentSession();
+        if (session == null) return;
+
+        int fontSize = getFontSizeForSession(session);
+        if (mActivity.getTerminalView().getTextSize() != fontSize)
+            mActivity.getTerminalView().setTextSize(fontSize);
+    }
+
     @SuppressLint("InflateParams")
     public void renameSession(final TerminalSession sessionToRename) {
         if (sessionToRename == null) return;
@@ -378,6 +401,7 @@ public class TermuxTerminalSessionActivityClient extends TermuxTerminalSessionCl
                 .setPositiveButton(android.R.string.ok, null).show();
         } else {
             TerminalSession currentSession = mActivity.getCurrentSession();
+            int fontSize = getFontSizeForSession(currentSession);
 
             String workingDirectory;
             if (currentSession == null) {
@@ -389,6 +413,7 @@ public class TermuxTerminalSessionActivityClient extends TermuxTerminalSessionCl
             TermuxSession newTermuxSession = service.createTermuxSession(null, null, null, workingDirectory, isFailSafe, sessionName);
             if (newTermuxSession == null) return;
 
+            newTermuxSession.setFontSize(fontSize);
             TerminalSession newTerminalSession = newTermuxSession.getTerminalSession();
             setCurrentSession(newTerminalSession);
 

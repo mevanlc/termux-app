@@ -285,9 +285,21 @@ public final class TerminalView extends View {
      * @param session The {@link TerminalSession} this view will be displaying.
      */
     public boolean attachSession(TerminalSession session) {
+        return attachSession(session, getTextSize());
+    }
+
+    /**
+     * Attach a {@link TerminalSession} to this view using the provided text size for the first resize.
+     *
+     * @param session The {@link TerminalSession} this view will be displaying.
+     * @param textSize the font size, in density-independent pixels.
+     */
+    public boolean attachSession(TerminalSession session, int textSize) {
         if (session == mTermSession) return false;
         mTopRow = 0;
 
+        if (textSize > 0)
+            setTextSizeWithoutUpdatingTerminal(textSize);
         mTermSession = session;
         mEmulator = null;
         mCombiningAccent = 0;
@@ -509,8 +521,17 @@ public final class TerminalView extends View {
      * @param textSize the new font size, in density-independent pixels.
      */
     public void setTextSize(int textSize) {
-        mRenderer = new TerminalRenderer(textSize, mRenderer == null ? Typeface.MONOSPACE : mRenderer.mTypeface);
+        setTextSizeWithoutUpdatingTerminal(textSize);
         updateSize();
+    }
+
+    public int getTextSize() {
+        return mRenderer == null ? 0 : mRenderer.mTextSize;
+    }
+
+    private void setTextSizeWithoutUpdatingTerminal(int textSize) {
+        if (mRenderer == null || mRenderer.mTextSize != textSize)
+            mRenderer = new TerminalRenderer(textSize, mRenderer == null ? Typeface.MONOSPACE : mRenderer.mTypeface);
     }
 
     public void setTypeface(Typeface newTypeface) {
