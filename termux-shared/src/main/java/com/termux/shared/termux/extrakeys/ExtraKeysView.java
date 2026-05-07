@@ -92,6 +92,8 @@ public final class ExtraKeysView extends GridLayout {
          */
         void onExtraKeyButtonClick(View view, ExtraKeyButton buttonInfo, MaterialButton button);
 
+        default void onExtraKeyButtonCreated(ExtraKeysView extraKeysView, ExtraKeyButton buttonInfo, MaterialButton button) {}
+
         /**
          * This is called by {@link ExtraKeysView} when a button is clicked so that the client
          * can perform any hepatic feedback. This is only called in the {@link MaterialButton.OnClickListener}
@@ -413,6 +415,8 @@ public final class ExtraKeysView extends GridLayout {
                 button.setTextColor(mButtonTextColor);
                 button.setAllCaps(mButtonTextAllCaps);
                 button.setPadding(0, 0, 0, 0);
+                if (mExtraKeysViewClient != null)
+                    mExtraKeysViewClient.onExtraKeyButtonCreated(this, buttonInfo, button);
 
                 button.setOnClickListener(view -> {
                     performExtraKeyButtonHapticFeedback(view, buttonInfo, button);
