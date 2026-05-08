@@ -114,6 +114,7 @@ public class TermuxTerminalExtraKeys extends TerminalExtraKeys {
         button.setText("");
         button.setContentDescription(buttonInfo.getDisplay());
         button.setIconPadding(0);
+        button.setIconSize(button.getResources().getDimensionPixelSize(R.dimen.extra_keys_scroll_icon_size));
         button.setIconGravity(MaterialButton.ICON_GRAVITY_TEXT_START);
         mScrollButtons.add(button);
         updateScrollButtonIcon(extraKeysView, button);
