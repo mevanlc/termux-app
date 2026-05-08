@@ -831,4 +831,14 @@ public class TermuxTerminalViewClient extends TermuxTerminalViewClientBase {
             session.getEmulator().paste(text);
     }
 
+    public void doPasteWithNewlines() {
+        TerminalSession session = mActivity.getCurrentSession();
+        if (session == null) return;
+        if (!session.isRunning()) return;
+
+        String text = ShareUtils.getTextStringFromClipboardIfSet(mActivity, true);
+        if (text != null)
+            session.getEmulator().pasteWithNewlines(text);
+    }
+
 }

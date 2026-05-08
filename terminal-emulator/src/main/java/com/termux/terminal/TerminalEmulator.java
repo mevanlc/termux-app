@@ -2589,10 +2589,24 @@ public final class TerminalEmulator {
 
     /** If DECSET 2004 is set, prefix paste with "\033[200~" and suffix with "\033[201~". */
     public void paste(String text) {
+        paste(text, true);
+    }
+
+    /** Paste after normalizing CRLF and CR line endings to LF. */
+    public void pasteWithNewlines(String text) {
+        paste(text, false);
+    }
+
+    private void paste(String text, boolean convertNewlinesToCarriageReturns) {
         // First: Always remove escape key and C1 control characters [0x80,0x9F]:
         text = text.replaceAll("(\u001B|[\u0080-\u009F])", "");
-        // Second: Replace all newlines (\n) or CRLF (\r\n) with carriage returns (\r).
-        text = text.replaceAll("\r?\n", "\r");
+        if (convertNewlinesToCarriageReturns) {
+            // Second: Replace all newlines (\n) or CRLF (\r\n) with carriage returns (\r).
+            text = text.replaceAll("\r?\n", "\r");
+        } else {
+            // Second: Replace all CRLF (\r\n) and remaining CR (\r) with newlines (\n).
+            text = text.replace("\r\n", "\n").replace('\r', '\n');
+        }
 
         // Then: Implement bracketed paste mode if enabled:
         boolean bracketed = isDecsetInternalBitSet(DECSET_BIT_BRACKETED_PASTE_MODE);

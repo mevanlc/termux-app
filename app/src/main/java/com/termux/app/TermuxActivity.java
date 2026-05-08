@@ -4,6 +4,7 @@ import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.content.ActivityNotFoundException;
 import android.content.BroadcastReceiver;
+import android.content.ClipboardManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -193,6 +194,7 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
     private static final int CONTEXT_MENU_HELP_ID = 7;
     private static final int CONTEXT_MENU_SETTINGS_ID = 8;
     private static final int CONTEXT_MENU_REPORT_ID = 9;
+    private static final int CONTEXT_MENU_PASTE_WITH_NEWLINES_ID = 12;
 
     private static final String ARG_TERMINAL_TOOLBAR_TEXT_INPUT = "terminal_toolbar_text_input";
     private static final String ARG_ACTIVITY_RECREATED = "activity_recreated";
@@ -652,6 +654,9 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
         menu.add(Menu.NONE, CONTEXT_MENU_SHARE_TRANSCRIPT_ID, Menu.NONE, R.string.action_share_transcript);
         if (!DataUtils.isNullOrEmpty(mTerminalView.getStoredSelectedText()))
             menu.add(Menu.NONE, CONTEXT_MENU_SHARE_SELECTED_TEXT, Menu.NONE, R.string.action_share_selected_text);
+        ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+        menu.add(Menu.NONE, CONTEXT_MENU_PASTE_WITH_NEWLINES_ID, Menu.NONE, R.string.action_paste_with_newlines)
+            .setEnabled(clipboard != null && clipboard.hasPrimaryClip());
         if (autoFillEnabled)
             menu.add(Menu.NONE, CONTEXT_MENU_AUTOFILL_USERNAME, Menu.NONE, R.string.action_autofill_username);
         if (autoFillEnabled)
@@ -685,6 +690,9 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
                 return true;
             case CONTEXT_MENU_SHARE_SELECTED_TEXT:
                 mTermuxTerminalViewClient.shareSelectedText();
+                return true;
+            case CONTEXT_MENU_PASTE_WITH_NEWLINES_ID:
+                mTermuxTerminalViewClient.doPasteWithNewlines();
                 return true;
             case CONTEXT_MENU_AUTOFILL_USERNAME:
                 mTerminalView.requestAutoFillUsername();
