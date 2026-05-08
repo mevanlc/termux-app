@@ -1,5 +1,7 @@
 package com.termux.shared.termux.extrakeys;
 
+import android.content.res.ColorStateList;
+
 import com.google.android.material.button.MaterialButton;
 
 import java.util.ArrayList;
@@ -15,6 +17,8 @@ public class SpecialButtonState {
     /** If special button is locked due to long hold on it and should not be deactivated if its
      * state is read. */
     boolean isLocked = false;
+
+    private static final int STICKY_STROKE_WIDTH_DP = 1;
 
     List<MaterialButton> buttons = new ArrayList<>();
 
@@ -39,13 +43,32 @@ public class SpecialButtonState {
     public void setIsActive(boolean value) {
         isActive = value;
         for (MaterialButton button : buttons) {
-            button.setTextColor(value ? mExtraKeysView.getButtonActiveTextColor() : mExtraKeysView.getButtonTextColor());
+            updateButtonState(button);
         }
     }
 
     /** Set {@link #isLocked}. */
     public void setIsLocked(boolean value) {
         isLocked = value;
+        for (MaterialButton button : buttons) {
+            updateButtonState(button);
+        }
+    }
+
+    /** Apply the current active and sticky visual state to a button. */
+    public void updateButtonState(MaterialButton button) {
+        button.setTextColor(isActive ? mExtraKeysView.getButtonActiveTextColor() : mExtraKeysView.getButtonTextColor());
+        if (isActive && isLocked) {
+            button.setStrokeColor(ColorStateList.valueOf(mExtraKeysView.getButtonActiveTextColor()));
+            button.setStrokeWidth(getStickyStrokeWidth());
+        } else {
+            button.setStrokeWidth(0);
+        }
+    }
+
+    private int getStickyStrokeWidth() {
+        float density = mExtraKeysView.getResources().getDisplayMetrics().density;
+        return Math.max(1, (int) (STICKY_STROKE_WIDTH_DP * density + 0.5f));
     }
 
 }

@@ -404,15 +404,16 @@ public final class ExtraKeysView extends GridLayout {
                 final ExtraKeyButton buttonInfo = buttons[row][col];
 
                 MaterialButton button;
-                if (isSpecialButton(buttonInfo)) {
+                boolean specialButton = isSpecialButton(buttonInfo);
+                if (specialButton) {
                     button = createSpecialButton(buttonInfo.getKey(), true);
                     if (button == null) return;
                 } else {
                     button = new MaterialButton(getContext(), null, android.R.attr.buttonBarButtonStyle);
+                    button.setTextColor(mButtonTextColor);
                 }
 
                 button.setText(buttonInfo.getDisplay());
-                button.setTextColor(mButtonTextColor);
                 button.setAllCaps(mButtonTextAllCaps);
                 button.setPadding(0, 0, 0, 0);
                 if (mExtraKeysViewClient != null)
@@ -683,7 +684,7 @@ public final class ExtraKeysView extends GridLayout {
         if (state == null) return null;
         state.setIsCreated(true);
         MaterialButton button = new MaterialButton(getContext(), null, android.R.attr.buttonBarButtonStyle);
-        button.setTextColor(state.isActive ? mButtonActiveTextColor : mButtonTextColor);
+        state.updateButtonState(button);
         if (needUpdate) {
             state.buttons.add(button);
         }
