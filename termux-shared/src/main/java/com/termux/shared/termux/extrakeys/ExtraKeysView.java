@@ -5,6 +5,7 @@ import android.content.Context;
 import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
+import android.os.SystemClock;
 import android.provider.Settings;
 import android.util.AttributeSet;
 
@@ -209,6 +210,8 @@ public final class ExtraKeysView extends GridLayout {
     protected Handler mHandler;
     protected SpecialButtonsLongHoldRunnable mSpecialButtonsLongHoldRunnable;
     protected int mLongPressCount;
+    protected SpecialButton mLastTappedSpecialButton;
+    protected long mLastSpecialButtonTapTime;
 
 
     public ExtraKeysView(Context context, AttributeSet attrs) {
@@ -544,16 +547,39 @@ public final class ExtraKeysView extends GridLayout {
     public void onAnyExtraKeyButtonClick(View view, @NonNull ExtraKeyButton buttonInfo, MaterialButton button) {
         if (isSpecialButton(buttonInfo)) {
             if (mLongPressCount > 0) return;
-            SpecialButtonState state = mSpecialButtons.get(SpecialButton.valueOf(buttonInfo.getKey()));
+            SpecialButton specialButton = SpecialButton.valueOf(buttonInfo.getKey());
+            SpecialButtonState state = mSpecialButtons.get(specialButton);
             if (state == null) return;
+
+            long tapTime = SystemClock.uptimeMillis();
+            if (isRapidDoubleTapOnActiveUnlockedSpecialButton(specialButton, state, tapTime)) {
+                state.setIsLocked(true);
+                mLastTappedSpecialButton = null;
+                mLastSpecialButtonTapTime = 0;
+                return;
+            }
 
             // Toggle active state and disable lock state if new state is not active
             state.setIsActive(!state.isActive);
-            if (!state.isActive)
+            if (!state.isActive) {
                 state.setIsLocked(false);
+                mLastTappedSpecialButton = null;
+                mLastSpecialButtonTapTime = 0;
+            } else {
+                mLastTappedSpecialButton = specialButton;
+                mLastSpecialButtonTapTime = tapTime;
+            }
         } else {
             onExtraKeyButtonClick(view, buttonInfo, button);
         }
+    }
+
+    private boolean isRapidDoubleTapOnActiveUnlockedSpecialButton(SpecialButton specialButton,
+                                                                  SpecialButtonState state,
+                                                                  long tapTime) {
+        return state.isActive && !state.isLocked &&
+            specialButton == mLastTappedSpecialButton &&
+            tapTime - mLastSpecialButtonTapTime <= ViewConfiguration.getDoubleTapTimeout();
     }
 
 
