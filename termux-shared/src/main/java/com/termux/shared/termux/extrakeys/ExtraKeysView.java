@@ -423,30 +423,45 @@ public final class ExtraKeysView extends GridLayout {
                     onAnyExtraKeyButtonClick(view, buttonInfo, button);
                 });
 
+                final boolean[] isSwipeUpActive = {false};
+                final boolean[] wasSwipeUpActivated = {false};
                 button.setOnTouchListener((view, event) -> {
                     switch (event.getAction()) {
                         case MotionEvent.ACTION_DOWN:
+                            isSwipeUpActive[0] = false;
+                            wasSwipeUpActivated[0] = false;
                             view.setBackgroundColor(mButtonActiveBackgroundColor);
                             // Start long press scheduled executors which will be stopped in next MotionEvent
                             startScheduledExecutors(view, buttonInfo, button);
                             return true;
 
                         case MotionEvent.ACTION_MOVE:
-                            if (buttonInfo.getPopup() != null) {
-                                // Show popup on swipe up
-                                if (mPopupWindow == null && event.getY() < 0) {
+                            if (event.getY() < 0) {
+                                if (!isSwipeUpActive[0]) {
                                     stopScheduledExecutors();
                                     view.setBackgroundColor(mButtonBackgroundColor);
-                                    showPopup(view, buttonInfo.getPopup());
                                 }
-                                if (mPopupWindow != null && event.getY() > 0) {
-                                    view.setBackgroundColor(mButtonActiveBackgroundColor);
+                                isSwipeUpActive[0] = true;
+                                wasSwipeUpActivated[0] = true;
+
+                                if (buttonInfo.getPopup() != null) {
+                                    // Show popup on swipe up
+                                    if (mPopupWindow == null) {
+                                        showPopup(view, buttonInfo.getPopup());
+                                    }
+                                }
+                            } else if (isSwipeUpActive[0]) {
+                                isSwipeUpActive[0] = false;
+                                view.setBackgroundColor(mButtonActiveBackgroundColor);
+                                if (mPopupWindow != null) {
                                     dismissPopup();
                                 }
                             }
                             return true;
 
                         case MotionEvent.ACTION_CANCEL:
+                            isSwipeUpActive[0] = false;
+                            wasSwipeUpActivated[0] = false;
                             view.setBackgroundColor(mButtonBackgroundColor);
                             stopScheduledExecutors();
                             return true;
@@ -462,10 +477,15 @@ public final class ExtraKeysView extends GridLayout {
                                     if (buttonInfo.getPopup() != null) {
                                         onAnyExtraKeyButtonClick(view, buttonInfo.getPopup(), button);
                                     }
+                                } else if (wasSwipeUpActivated[0] || isSwipeUpActive[0] || event.getY() < 0) {
+                                    isSwipeUpActive[0] = false;
+                                    wasSwipeUpActivated[0] = false;
                                 } else {
                                     view.performClick();
                                 }
                             }
+                            isSwipeUpActive[0] = false;
+                            wasSwipeUpActivated[0] = false;
                             return true;
 
                         default:
