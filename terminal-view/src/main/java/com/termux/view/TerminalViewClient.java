@@ -67,6 +67,13 @@ public interface TerminalViewClient {
 
     void onPasteTextFromClipboard();
 
+    default String getUrlForTextSelection(String selectedText) {
+        return null;
+    }
+
+    default void onOpenUrl(String url) {
+    }
+
 
     void logError(String tag, String message);
 

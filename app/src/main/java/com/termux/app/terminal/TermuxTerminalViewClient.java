@@ -210,6 +210,29 @@ public class TermuxTerminalViewClient extends TermuxTerminalViewClientBase {
     }
 
     @Override
+    public String getUrlForTextSelection(String selectedText) {
+        return extractUrlFromTextSelection(selectedText);
+    }
+
+    @Override
+    public void onOpenUrl(String url) {
+        ShareUtils.openUrl(mActivity, url);
+    }
+
+    public static String extractUrlFromTextSelection(String selectedText) {
+        if (selectedText == null) return null;
+
+        String trimmedSelectedText = selectedText.trim();
+        if (trimmedSelectedText.isEmpty()) return null;
+
+        LinkedHashSet<CharSequence> urlSet = TermuxUrlUtils.extractUrls(trimmedSelectedText);
+        if (urlSet.size() != 1) return null;
+
+        String url = urlSet.iterator().next().toString();
+        return trimmedSelectedText.equals(url) ? url : null;
+    }
+
+    @Override
     public boolean shouldBackButtonBeMappedToEscape() {
         return mActivity.getProperties().isBackKeyTheEscapeKey();
     }

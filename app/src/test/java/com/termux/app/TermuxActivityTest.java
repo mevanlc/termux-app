@@ -1,5 +1,6 @@
 package com.termux.app;
 
+import com.termux.app.terminal.TermuxTerminalViewClient;
 import com.termux.shared.termux.data.TermuxUrlUtils;
 
 import org.junit.Assert;
@@ -27,6 +28,19 @@ public class TermuxActivityTest {
 
         assertUrlsAre("hello https://example.com/#bar https://example.com/foo#bar",
             "https://example.com/#bar", "https://example.com/foo#bar");
+    }
+
+    @Test
+    public void testExtractUrlFromTextSelection() {
+        Assert.assertEquals("http://example.com",
+            TermuxTerminalViewClient.extractUrlFromTextSelection("http://example.com"));
+        Assert.assertEquals("https://example.com/foo#bar",
+            TermuxTerminalViewClient.extractUrlFromTextSelection("  https://example.com/foo#bar\n"));
+
+        Assert.assertNull(TermuxTerminalViewClient.extractUrlFromTextSelection(null));
+        Assert.assertNull(TermuxTerminalViewClient.extractUrlFromTextSelection(""));
+        Assert.assertNull(TermuxTerminalViewClient.extractUrlFromTextSelection("hello http://example.com"));
+        Assert.assertNull(TermuxTerminalViewClient.extractUrlFromTextSelection("http://example.com\nhttp://another.com"));
     }
 
 }

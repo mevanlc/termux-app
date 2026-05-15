@@ -95,6 +95,16 @@ public class TermuxTerminalViewClientBase implements TerminalViewClient {
     }
 
     @Override
+    public String getUrlForTextSelection(String selectedText) {
+        return null;
+    }
+
+    @Override
+    public void onOpenUrl(String url) {
+
+    }
+
+    @Override
     public void logError(String tag, String message) {
         Logger.logError(tag, message);
     }
