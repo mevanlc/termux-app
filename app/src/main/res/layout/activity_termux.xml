@@ -94,7 +94,7 @@
 
         </androidx.drawerlayout.widget.DrawerLayout>
 
-        <com.termux.app.terminal.io.TerminalToolbarViewPagerView
+        <androidx.viewpager.widget.ViewPager
             android:id="@+id/terminal_toolbar_view_pager"
             android:visibility="gone"
             android:layout_width="match_parent"
