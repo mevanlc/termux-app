@@ -147,33 +147,4 @@ public class TextInputHistory {
         history.clear();
         resetNavigation();
     }
-
-    /**
-     * Gets a copy of the current history for persistence or debugging.
-     * @return A new ArrayList containing all history entries
-     */
-    public ArrayList<String> getHistoryCopy() {
-        return new ArrayList<>(history);
-    }
-
-    /**
-     * Restores history from a list (for persistence).
-     * @param historyEntries List of history entries to restore
-     */
-    public void restoreHistory(ArrayList<String> historyEntries) {
-        if (historyEntries == null) {
-            return;
-        }
-
-        clear();
-
-        // Add entries while respecting max size
-        int startIndex = Math.max(0, historyEntries.size() - maxHistorySize);
-        for (int i = startIndex; i < historyEntries.size(); i++) {
-            String entry = historyEntries.get(i);
-            if (entry != null && !entry.trim().isEmpty()) {
-                history.add(entry);
-            }
-        }
-    }
 }

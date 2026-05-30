@@ -3,7 +3,6 @@ package com.termux.app.terminal.io;
 import org.junit.Before;
 import org.junit.Test;
 import static org.junit.Assert.*;
-import java.util.ArrayList;
 
 public class TextInputHistoryTest {
 
@@ -49,17 +48,18 @@ public class TextInputHistoryTest {
 
     @Test
     public void testMaxHistorySize() {
-        // Add more entries than max size
         for (int i = 0; i < 10; i++) {
             history.addEntry("command" + i);
         }
 
-        assertEquals(5, history.size()); // Should be capped at max size
+        assertEquals(5, history.size());
 
-        // Verify oldest entries were removed
-        ArrayList<String> historyCopy = history.getHistoryCopy();
-        assertEquals("command5", historyCopy.get(0)); // Oldest should be command5
-        assertEquals("command9", historyCopy.get(4)); // Newest should be command9
+        // Walk newest-to-oldest via navigateUp; command0..command4 should have been evicted.
+        for (int i = 9; i >= 5; i--) {
+            assertEquals("command" + i, history.navigateUp(""));
+        }
+        // Already at the oldest retained entry; further navigateUp stays there.
+        assertEquals("command5", history.navigateUp(""));
     }
 
     @Test
@@ -145,74 +145,6 @@ public class TextInputHistoryTest {
         assertEquals(0, history.size());
         assertTrue(history.isEmpty());
         assertFalse(history.isNavigating());
-    }
-
-    @Test
-    public void testGetHistoryCopy() {
-        history.addEntry("test1");
-        history.addEntry("test2");
-
-        ArrayList<String> copy = history.getHistoryCopy();
-        assertEquals(2, copy.size());
-        assertEquals("test1", copy.get(0));
-        assertEquals("test2", copy.get(1));
-
-        // Verify it's a copy (modifications don't affect original)
-        copy.add("test3");
-        assertEquals(2, history.size());
-    }
-
-    @Test
-    public void testRestoreHistory() {
-        ArrayList<String> entries = new ArrayList<>();
-        entries.add("restored1");
-        entries.add("restored2");
-        entries.add("restored3");
-
-        history.restoreHistory(entries);
-
-        assertEquals(3, history.size());
-        assertEquals("restored1", history.navigateUp(""));
-        assertEquals("restored2", history.navigateUp(""));
-        assertEquals("restored3", history.navigateUp(""));
-    }
-
-    @Test
-    public void testRestoreHistoryExceedsMaxSize() {
-        ArrayList<String> entries = new ArrayList<>();
-        for (int i = 0; i < 10; i++) {
-            entries.add("entry" + i);
-        }
-
-        history.restoreHistory(entries);
-
-        // Should only keep the most recent entries
-        assertEquals(5, history.size());
-        ArrayList<String> copy = history.getHistoryCopy();
-        assertEquals("entry5", copy.get(0)); // Oldest kept
-        assertEquals("entry9", copy.get(4)); // Newest kept
-    }
-
-    @Test
-    public void testRestoreHistoryWithNullAndEmpty() {
-        ArrayList<String> entries = new ArrayList<>();
-        entries.add("valid1");
-        entries.add("");
-        entries.add(null);
-        entries.add("  ");
-        entries.add("valid2");
-
-        history.restoreHistory(entries);
-
-        assertEquals(2, history.size()); // Only valid entries should be kept
-    }
-
-    @Test
-    public void testRestoreHistoryWithNull() {
-        history.addEntry("existing");
-        history.restoreHistory(null);
-
-        assertEquals(0, history.size()); // Should clear existing history
     }
 
     @Test
