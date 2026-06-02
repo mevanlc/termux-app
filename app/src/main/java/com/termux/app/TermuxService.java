@@ -605,6 +605,8 @@ public final class TermuxService extends Service implements AppShell.AppShellCli
             return null;
         }
 
+        newTermuxSession.getTerminalSession().setTerminalProductName(mProperties.getTerminalProductName());
+
         mShellManager.mTermuxSessions.add(newTermuxSession);
 
         // Remove the execution command from the pending plugin execution commands list since it has
@@ -900,6 +902,11 @@ public final class TermuxService extends Service implements AppShell.AppShellCli
         }
 
         return null;
+    }
+
+    public synchronized void updateTerminalSessionProductName(@Nullable String terminalProductName) {
+        for (int i = 0; i < mShellManager.mTermuxSessions.size(); i++)
+            mShellManager.mTermuxSessions.get(i).getTerminalSession().setTerminalProductName(terminalProductName);
     }
 
     public synchronized TermuxSession getLastTermuxSession() {

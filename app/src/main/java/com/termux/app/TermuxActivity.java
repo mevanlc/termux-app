@@ -434,6 +434,7 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
 
         // Update the {@link TerminalSession} and {@link TerminalEmulator} clients.
         mTermuxService.setTermuxTerminalSessionClient(mTermuxTerminalSessionActivityClient);
+        mTermuxService.updateTerminalSessionProductName(mProperties.getTerminalProductName());
     }
 
     @Override
@@ -451,6 +452,9 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
 
     private void reloadProperties() {
         mProperties.loadTermuxPropertiesFromDisk();
+
+        if (mTermuxService != null)
+            mTermuxService.updateTerminalSessionProductName(mProperties.getTerminalProductName());
 
         if (mTermuxTerminalViewClient != null)
             mTermuxTerminalViewClient.onReloadProperties();

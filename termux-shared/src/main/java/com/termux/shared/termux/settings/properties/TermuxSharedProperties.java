@@ -302,6 +302,8 @@ public abstract class TermuxSharedProperties {
                 return (String) getNightModeInternalPropertyValueFromValue(value);
             case TermuxPropertyConstants.KEY_SOFT_KEYBOARD_TOGGLE_BEHAVIOUR:
                 return (String) getSoftKeyboardToggleBehaviourInternalPropertyValueFromValue(value);
+            case TermuxPropertyConstants.KEY_TERMINAL_PRODUCT_NAME:
+                return (String) getTerminalProductNameInternalPropertyValueFromValue(value);
             case TermuxPropertyConstants.KEY_VOLUME_KEYS_BEHAVIOUR:
                 return (String) getVolumeKeysBehaviourInternalPropertyValueFromValue(value);
 
@@ -593,6 +595,27 @@ public abstract class TermuxSharedProperties {
     }
 
     /**
+     * Returns the trimmed product name without control characters if it is not empty, otherwise returns
+     * {@link TermuxPropertyConstants#DEFAULT_IVALUE_TERMINAL_PRODUCT_NAME}.
+     *
+     * @param value {@link String} value to convert.
+     * @return Returns the internal value for value.
+     */
+    public static String getTerminalProductNameInternalPropertyValueFromValue(String value) {
+        String productName = null;
+        if (value != null) {
+            StringBuilder builder = new StringBuilder();
+            for (int i = 0; i < value.length(); i++) {
+                char c = value.charAt(i);
+                if ((c >= 0x20 && c != 0x7F) && !(c >= 0x80 && c <= 0x9F))
+                    builder.append(c);
+            }
+            productName = builder.toString().trim();
+        }
+        return SharedProperties.getDefaultIfNullOrEmpty(productName, TermuxPropertyConstants.DEFAULT_IVALUE_TERMINAL_PRODUCT_NAME);
+    }
+
+    /**
      * Returns the value itself if it is not {@code null}, otherwise returns {@link TermuxPropertyConstants#DEFAULT_IVALUE_VOLUME_KEYS_BEHAVIOUR}.
      *
      * @param value {@link String} value to convert.
@@ -714,6 +737,10 @@ public abstract class TermuxSharedProperties {
 
     public boolean shouldEnableDisableSoftKeyboardOnToggle() {
         return (boolean) TermuxPropertyConstants.IVALUE_SOFT_KEYBOARD_TOGGLE_BEHAVIOUR_ENABLE_DISABLE.equals(getInternalPropertyValue(TermuxPropertyConstants.KEY_SOFT_KEYBOARD_TOGGLE_BEHAVIOUR, true));
+    }
+
+    public String getTerminalProductName() {
+        return (String) getInternalPropertyValue(TermuxPropertyConstants.KEY_TERMINAL_PRODUCT_NAME, true);
     }
 
     public boolean areVirtualVolumeKeysDisabled() {

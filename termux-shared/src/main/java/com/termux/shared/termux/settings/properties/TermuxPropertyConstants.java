@@ -18,7 +18,7 @@ import java.util.List;
 import java.util.Set;
 
 /*
- * Version: v0.18.0
+ * Version: v0.19.0
  * SPDX-License-Identifier: MIT
  *
  * Changelog
@@ -80,6 +80,9 @@ import java.util.Set;
  *
  * - 0.18.0 (2022-06-13)
  *      - Add `KEY_DISABLE_FILE_SHARE_RECEIVER` and `KEY_DISABLE_FILE_VIEW_RECEIVER`.
+ *
+ * - 0.19.0 (2026-05-31)
+ *      - Add `KEY_TERMINAL_PRODUCT_NAME`.
  */
 
 /**
@@ -340,6 +343,13 @@ public final class TermuxPropertyConstants {
 
 
 
+    /** Defines the terminal product name reported by XTVERSION */
+    public static final String KEY_TERMINAL_PRODUCT_NAME = "terminal-product-name"; // Default: "terminal-product-name"
+    /** Defines the default terminal product name reported by XTVERSION */
+    public static final String DEFAULT_IVALUE_TERMINAL_PRODUCT_NAME = TermuxConstants.TERMUX_APP_NAME;
+
+
+
     /** Defines the key for extra keys */
     public static final String KEY_EXTRA_KEYS =  "extra-keys"; // Default: "extra-keys"
     //public static final String DEFAULT_IVALUE_EXTRA_KEYS = "[[ESC, TAB, CTRL, ALT, {key: '-', popup: '|'}, DOWN, UP]]"; // Single row
@@ -455,6 +465,7 @@ public final class TermuxPropertyConstants {
         KEY_EXTRA_KEYS_STYLE,
         KEY_NIGHT_MODE,
         KEY_SOFT_KEYBOARD_TOGGLE_BEHAVIOUR,
+        KEY_TERMINAL_PRODUCT_NAME,
         KEY_VOLUME_KEYS_BEHAVIOUR
     ));
 

@@ -5,6 +5,11 @@ import java.nio.charset.StandardCharsets;
 /** A client which receives callbacks from events triggered by feeding input to a {@link TerminalEmulator}. */
 public abstract class TerminalOutput {
 
+    /** Return the terminal name/version string for XTVERSION queries. */
+    public String getTerminalVersionString() {
+        return "Termux";
+    }
+
     /** Write a string using the UTF-8 encoding to the terminal client. */
     public final void write(String data) {
         if (data == null) return;

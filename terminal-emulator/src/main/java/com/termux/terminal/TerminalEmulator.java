@@ -1899,6 +1899,13 @@ public final class TerminalEmulator {
                 // The third number is a keyboard identifier not used nowadays.
                 mSession.write("\033[>41;320;0c");
                 break;
+            case 'q': // "${CSI}>0q". Report xterm name and version (XTVERSION).
+                int queryType = getArg0(0);
+                if (queryType == 0)
+                    mSession.write("\033P>|" + mSession.getTerminalVersionString() + "\033\\");
+                else
+                    unknownParameter(queryType);
+                break;
             case 'm':
                 // https://bugs.launchpad.net/gnome-terminal/+bug/96676/comments/25
                 // Depending on the first number parameter, this can set one of the xterm resources
