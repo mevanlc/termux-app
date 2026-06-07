@@ -273,6 +273,8 @@ public abstract class TermuxSharedProperties {
                 return (int) getTerminalMarginVerticalInternalPropertyValueFromValue(value);
             case TermuxPropertyConstants.KEY_TERMINAL_TRANSCRIPT_ROWS:
                 return (int) getTerminalTranscriptRowsInternalPropertyValueFromValue(value);
+            case TermuxPropertyConstants.KEY_ZOOM_MINIMUM_DP:
+                return (int) getZoomMinimumDpInternalPropertyValueFromValue(value);
 
             /* float */
             case TermuxPropertyConstants.KEY_TERMINAL_TOOLBAR_HEIGHT_SCALE_FACTOR:
@@ -441,6 +443,24 @@ public abstract class TermuxSharedProperties {
             TermuxPropertyConstants.DEFAULT_IVALUE_TERMINAL_TRANSCRIPT_ROWS,
             TermuxPropertyConstants.IVALUE_TERMINAL_TRANSCRIPT_ROWS_MIN,
             TermuxPropertyConstants.IVALUE_TERMINAL_TRANSCRIPT_ROWS_MAX,
+            true, true, LOG_TAG);
+    }
+
+    /**
+     * Returns the int for the value if its not null and is between
+     * {@link TermuxPropertyConstants#IVALUE_ZOOM_MINIMUM_DP_MIN} and
+     * {@link TermuxPropertyConstants#IVALUE_ZOOM_MINIMUM_DP_MAX},
+     * otherwise returns {@link TermuxPropertyConstants#DEFAULT_IVALUE_ZOOM_MINIMUM_DP}.
+     *
+     * @param value The {@link String} value to convert.
+     * @return Returns the internal value for value.
+     */
+    public static int getZoomMinimumDpInternalPropertyValueFromValue(String value) {
+        return SharedProperties.getDefaultIfNotInRange(TermuxPropertyConstants.KEY_ZOOM_MINIMUM_DP,
+            DataUtils.getIntFromString(value, TermuxPropertyConstants.DEFAULT_IVALUE_ZOOM_MINIMUM_DP),
+            TermuxPropertyConstants.DEFAULT_IVALUE_ZOOM_MINIMUM_DP,
+            TermuxPropertyConstants.IVALUE_ZOOM_MINIMUM_DP_MIN,
+            TermuxPropertyConstants.IVALUE_ZOOM_MINIMUM_DP_MAX,
             true, true, LOG_TAG);
     }
 
@@ -711,6 +731,10 @@ public abstract class TermuxSharedProperties {
 
     public int getTerminalTranscriptRows() {
         return (int) getInternalPropertyValue(TermuxPropertyConstants.KEY_TERMINAL_TRANSCRIPT_ROWS, true);
+    }
+
+    public int getZoomMinimumDp() {
+        return (int) getInternalPropertyValue(TermuxPropertyConstants.KEY_ZOOM_MINIMUM_DP, true);
     }
 
     public float getTerminalToolbarHeightScaleFactor() {

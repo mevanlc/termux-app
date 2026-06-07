@@ -456,6 +456,9 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
         if (mTermuxService != null)
             mTermuxService.updateTerminalSessionProductName(mProperties.getTerminalProductName());
 
+        if (mPreferences != null)
+            mPreferences.setFontVariables(this);
+
         if (mTermuxTerminalViewClient != null)
             mTermuxTerminalViewClient.onReloadProperties();
     }

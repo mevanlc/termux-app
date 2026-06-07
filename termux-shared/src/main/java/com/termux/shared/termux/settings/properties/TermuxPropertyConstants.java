@@ -18,7 +18,7 @@ import java.util.List;
 import java.util.Set;
 
 /*
- * Version: v0.19.0
+ * Version: v0.20.0
  * SPDX-License-Identifier: MIT
  *
  * Changelog
@@ -83,6 +83,9 @@ import java.util.Set;
  *
  * - 0.19.0 (2026-05-31)
  *      - Add `KEY_TERMINAL_PRODUCT_NAME`.
+ *
+ * - 0.20.0 (2026-06-02)
+ *      - Add `KEY_ZOOM_MINIMUM_DP`.
  */
 
 /**
@@ -268,6 +271,14 @@ public final class TermuxPropertyConstants {
 
 
 
+    /** Defines the minimum terminal font size for zooming in dp units */
+    public static final String KEY_ZOOM_MINIMUM_DP = "zoom-minimum-dp"; // Default: "zoom-minimum-dp"
+    public static final int IVALUE_ZOOM_MINIMUM_DP_MIN = 1;
+    public static final int IVALUE_ZOOM_MINIMUM_DP_MAX = 64;
+    public static final int DEFAULT_IVALUE_ZOOM_MINIMUM_DP = 4;
+
+
+
 
 
     /* float */
@@ -446,6 +457,7 @@ public final class TermuxPropertyConstants {
         KEY_TERMINAL_MARGIN_HORIZONTAL,
         KEY_TERMINAL_MARGIN_VERTICAL,
         KEY_TERMINAL_TRANSCRIPT_ROWS,
+        KEY_ZOOM_MINIMUM_DP,
 
         /* float */
         KEY_TERMINAL_TOOLBAR_HEIGHT_SCALE_FACTOR,
