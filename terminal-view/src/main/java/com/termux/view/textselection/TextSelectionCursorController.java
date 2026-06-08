@@ -33,6 +33,7 @@ public class TextSelectionCursorController implements CursorController {
     public final int ACTION_COPY = 1;
     public final int ACTION_PASTE = 2;
     public final int ACTION_MORE = 3;
+    public final int ACTION_OPEN_URL = 4;
 
     public TextSelectionCursorController(TerminalView terminalView) {
         this.terminalView = terminalView;
@@ -116,13 +117,15 @@ public class TextSelectionCursorController implements CursorController {
                 ClipboardManager clipboard = (ClipboardManager) terminalView.getContext().getSystemService(Context.CLIPBOARD_SERVICE);
                 menu.add(Menu.NONE, ACTION_COPY, Menu.NONE, R.string.copy_text).setShowAsAction(show);
                 menu.add(Menu.NONE, ACTION_PASTE, Menu.NONE, R.string.paste_text).setEnabled(clipboard != null && clipboard.hasPrimaryClip()).setShowAsAction(show);
+                menu.add(Menu.NONE, ACTION_OPEN_URL, Menu.NONE, R.string.open_url).setShowAsAction(show);
                 menu.add(Menu.NONE, ACTION_MORE, Menu.NONE, R.string.text_selection_more);
+                updateOpenUrlMenuItem(menu);
                 return true;
             }
 
             @Override
             public boolean onPrepareActionMode(ActionMode mode, Menu menu) {
-                return false;
+                return updateOpenUrlMenuItem(menu);
             }
 
             @Override
@@ -141,6 +144,13 @@ public class TextSelectionCursorController implements CursorController {
                     case ACTION_PASTE:
                         terminalView.stopTextSelectionMode();
                         terminalView.mTermSession.onPasteTextFromClipboard();
+                        break;
+                    case ACTION_OPEN_URL:
+                        String selectedUrl = getSelectedUrl();
+                        if (!TextUtils.isEmpty(selectedUrl)) {
+                            terminalView.stopTextSelectionMode();
+                            terminalView.mClient.onOpenUrl(selectedUrl);
+                        }
                         break;
                     case ACTION_MORE:
                         // We first store the selected text in case TerminalViewClient needs the
@@ -177,7 +187,7 @@ public class TextSelectionCursorController implements CursorController {
 
             @Override
             public boolean onPrepareActionMode(ActionMode mode, Menu menu) {
-                return false;
+                return callback.onPrepareActionMode(mode, menu);
             }
 
             @Override
@@ -212,6 +222,22 @@ public class TextSelectionCursorController implements CursorController {
                 outRect.set(x1, top, x2, bottom);
             }
         }, ActionMode.TYPE_FLOATING);
+    }
+
+    private boolean updateOpenUrlMenuItem(Menu menu) {
+        MenuItem openUrlItem = menu.findItem(ACTION_OPEN_URL);
+        if (openUrlItem == null) return false;
+
+        boolean shouldShow = !TextUtils.isEmpty(getSelectedUrl());
+        boolean changed = openUrlItem.isVisible() != shouldShow || openUrlItem.isEnabled() != shouldShow;
+        openUrlItem.setVisible(shouldShow);
+        openUrlItem.setEnabled(shouldShow);
+        return changed;
+    }
+
+    @Nullable
+    private String getSelectedUrl() {
+        return terminalView.mClient != null ? terminalView.mClient.getUrlForTextSelection(getSelectedText()) : null;
     }
 
     @Override

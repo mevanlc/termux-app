@@ -35,6 +35,7 @@ public class TermuxSession {
     private final ExecutionCommand mExecutionCommand;
     private final TermuxSessionClient mTermuxSessionClient;
     private final boolean mSetStdoutOnExit;
+    private Integer mFontSize;
 
     private static final String LOG_TAG = "TermuxSession";
 
@@ -274,6 +275,15 @@ public class TermuxSession {
 
     public TerminalSession getTerminalSession() {
         return mTerminalSession;
+    }
+
+    @Nullable
+    public Integer getFontSize() {
+        return mFontSize;
+    }
+
+    public void setFontSize(@Nullable Integer fontSize) {
+        mFontSize = fontSize;
     }
 
     public ExecutionCommand getExecutionCommand() {

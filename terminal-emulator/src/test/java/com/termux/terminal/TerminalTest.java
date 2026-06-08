@@ -136,6 +136,16 @@ public class TerminalTest extends TerminalTestCase {
 		assertEquals("hi", mOutput.getOutputAndClear());
 	}
 
+	public void testPasteWithNewlines() {
+		withTerminalSized(5, 5);
+		mTerminal.pasteWithNewlines("a\r\nb\rc\nd");
+		assertEquals("a\nb\nc\nd", mOutput.getOutputAndClear());
+
+		enterString("\033[?2004h");
+		mTerminal.pasteWithNewlines("a\r\nb\rc\nd");
+		assertEquals("\033[200~" + "a\nb\nc\nd" + "\033[201~", mOutput.getOutputAndClear());
+	}
+
 	public void testSelectGraphics() {
 		selectGraphicsTestRun(';');
 		selectGraphicsTestRun(':');

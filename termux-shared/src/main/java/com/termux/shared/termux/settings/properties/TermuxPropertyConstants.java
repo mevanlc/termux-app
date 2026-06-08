@@ -18,7 +18,7 @@ import java.util.List;
 import java.util.Set;
 
 /*
- * Version: v0.18.0
+ * Version: v0.20.0
  * SPDX-License-Identifier: MIT
  *
  * Changelog
@@ -80,6 +80,12 @@ import java.util.Set;
  *
  * - 0.18.0 (2022-06-13)
  *      - Add `KEY_DISABLE_FILE_SHARE_RECEIVER` and `KEY_DISABLE_FILE_VIEW_RECEIVER`.
+ *
+ * - 0.19.0 (2026-05-31)
+ *      - Add `KEY_TERMINAL_PRODUCT_NAME`.
+ *
+ * - 0.20.0 (2026-06-02)
+ *      - Add `KEY_ZOOM_MINIMUM_DP`.
  */
 
 /**
@@ -109,6 +115,11 @@ public final class TermuxPropertyConstants {
 
     /** Defines the key for whether hardware keyboard shortcuts are enabled. */
     public static final String KEY_DISABLE_HARDWARE_KEYBOARD_SHORTCUTS =  "disable-hardware-keyboard-shortcuts"; // Default: "disable-hardware-keyboard-shortcuts"
+
+
+
+    /** Defines the key for whether a toast will be shown when a non-current terminal session changes title */
+    public static final String KEY_DISABLE_SESSION_TITLE_CHANGE_TOAST =  "disable-session-title-change-toast"; // Default: "disable-session-title-change-toast"
 
 
 
@@ -260,6 +271,14 @@ public final class TermuxPropertyConstants {
 
 
 
+    /** Defines the minimum terminal font size for zooming in dp units */
+    public static final String KEY_ZOOM_MINIMUM_DP = "zoom-minimum-dp"; // Default: "zoom-minimum-dp"
+    public static final int IVALUE_ZOOM_MINIMUM_DP_MIN = 1;
+    public static final int IVALUE_ZOOM_MINIMUM_DP_MAX = 64;
+    public static final int DEFAULT_IVALUE_ZOOM_MINIMUM_DP = 4;
+
+
+
 
 
     /* float */
@@ -335,10 +354,21 @@ public final class TermuxPropertyConstants {
 
 
 
+    /** Defines the terminal product name reported by XTVERSION */
+    public static final String KEY_TERMINAL_PRODUCT_NAME = "terminal-product-name"; // Default: "terminal-product-name"
+    /** Defines the default terminal product name reported by XTVERSION */
+    public static final String DEFAULT_IVALUE_TERMINAL_PRODUCT_NAME = TermuxConstants.TERMUX_APP_NAME;
+
+
+
     /** Defines the key for extra keys */
     public static final String KEY_EXTRA_KEYS =  "extra-keys"; // Default: "extra-keys"
     //public static final String DEFAULT_IVALUE_EXTRA_KEYS = "[[ESC, TAB, CTRL, ALT, {key: '-', popup: '|'}, DOWN, UP]]"; // Single row
     public static final String DEFAULT_IVALUE_EXTRA_KEYS = "[['ESC','/',{key: '-', popup: '|'},'HOME','UP','END','PGUP'], ['TAB','CTRL','ALT','LEFT','DOWN','RIGHT','PGDN']]"; // Double row
+
+    /** Defines the key for extra keys shown on the left toolbar page */
+    public static final String KEY_EXTRA_KEYS_PAGE_LEFT = "extra-keys-page-left"; // Default: "extra-keys-page-left"
+    public static final String DEFAULT_IVALUE_EXTRA_KEYS_PAGE_LEFT = "[['F1','F2','F3','F4','F5','F6'], ['F7','F8','F9','F10','F11','F12']]";
 
     /** Defines the key for extra keys style */
     public static final String KEY_EXTRA_KEYS_STYLE =  "extra-keys-style"; // Default: "extra-keys-style"
@@ -407,6 +437,7 @@ public final class TermuxPropertyConstants {
         KEY_DISABLE_FILE_SHARE_RECEIVER,
         KEY_DISABLE_FILE_VIEW_RECEIVER,
         KEY_DISABLE_HARDWARE_KEYBOARD_SHORTCUTS,
+        KEY_DISABLE_SESSION_TITLE_CHANGE_TOAST,
         KEY_DISABLE_TERMINAL_SESSION_CHANGE_TOAST,
         KEY_ENFORCE_CHAR_BASED_INPUT,
         KEY_EXTRA_KEYS_TEXT_ALL_CAPS,
@@ -426,6 +457,7 @@ public final class TermuxPropertyConstants {
         KEY_TERMINAL_MARGIN_HORIZONTAL,
         KEY_TERMINAL_MARGIN_VERTICAL,
         KEY_TERMINAL_TRANSCRIPT_ROWS,
+        KEY_ZOOM_MINIMUM_DP,
 
         /* float */
         KEY_TERMINAL_TOOLBAR_HEIGHT_SCALE_FACTOR,
@@ -441,9 +473,11 @@ public final class TermuxPropertyConstants {
         KEY_CLIPBOARD_IMAGE_PASTE_DIR,
         KEY_DEFAULT_WORKING_DIRECTORY,
         KEY_EXTRA_KEYS,
+        KEY_EXTRA_KEYS_PAGE_LEFT,
         KEY_EXTRA_KEYS_STYLE,
         KEY_NIGHT_MODE,
         KEY_SOFT_KEYBOARD_TOGGLE_BEHAVIOUR,
+        KEY_TERMINAL_PRODUCT_NAME,
         KEY_VOLUME_KEYS_BEHAVIOUR
     ));
 
@@ -457,6 +491,7 @@ public final class TermuxPropertyConstants {
         KEY_DISABLE_FILE_SHARE_RECEIVER,
         KEY_DISABLE_FILE_VIEW_RECEIVER,
         KEY_DISABLE_HARDWARE_KEYBOARD_SHORTCUTS,
+        KEY_DISABLE_SESSION_TITLE_CHANGE_TOAST,
         KEY_DISABLE_TERMINAL_SESSION_CHANGE_TOAST,
         KEY_ENFORCE_CHAR_BASED_INPUT,
         KEY_HIDE_SOFT_KEYBOARD_ON_STARTUP,

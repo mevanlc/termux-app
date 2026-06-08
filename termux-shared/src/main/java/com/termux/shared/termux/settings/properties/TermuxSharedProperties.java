@@ -273,6 +273,8 @@ public abstract class TermuxSharedProperties {
                 return (int) getTerminalMarginVerticalInternalPropertyValueFromValue(value);
             case TermuxPropertyConstants.KEY_TERMINAL_TRANSCRIPT_ROWS:
                 return (int) getTerminalTranscriptRowsInternalPropertyValueFromValue(value);
+            case TermuxPropertyConstants.KEY_ZOOM_MINIMUM_DP:
+                return (int) getZoomMinimumDpInternalPropertyValueFromValue(value);
 
             /* float */
             case TermuxPropertyConstants.KEY_TERMINAL_TOOLBAR_HEIGHT_SCALE_FACTOR:
@@ -294,12 +296,16 @@ public abstract class TermuxSharedProperties {
                 return (String) getDefaultWorkingDirectoryInternalPropertyValueFromValue(value);
             case TermuxPropertyConstants.KEY_EXTRA_KEYS:
                 return (String) getExtraKeysInternalPropertyValueFromValue(value);
+            case TermuxPropertyConstants.KEY_EXTRA_KEYS_PAGE_LEFT:
+                return (String) getExtraKeysPageLeftInternalPropertyValueFromValue(value);
             case TermuxPropertyConstants.KEY_EXTRA_KEYS_STYLE:
                 return (String) getExtraKeysStyleInternalPropertyValueFromValue(value);
             case TermuxPropertyConstants.KEY_NIGHT_MODE:
                 return (String) getNightModeInternalPropertyValueFromValue(value);
             case TermuxPropertyConstants.KEY_SOFT_KEYBOARD_TOGGLE_BEHAVIOUR:
                 return (String) getSoftKeyboardToggleBehaviourInternalPropertyValueFromValue(value);
+            case TermuxPropertyConstants.KEY_TERMINAL_PRODUCT_NAME:
+                return (String) getTerminalProductNameInternalPropertyValueFromValue(value);
             case TermuxPropertyConstants.KEY_VOLUME_KEYS_BEHAVIOUR:
                 return (String) getVolumeKeysBehaviourInternalPropertyValueFromValue(value);
 
@@ -442,6 +448,24 @@ public abstract class TermuxSharedProperties {
 
     /**
      * Returns the int for the value if its not null and is between
+     * {@link TermuxPropertyConstants#IVALUE_ZOOM_MINIMUM_DP_MIN} and
+     * {@link TermuxPropertyConstants#IVALUE_ZOOM_MINIMUM_DP_MAX},
+     * otherwise returns {@link TermuxPropertyConstants#DEFAULT_IVALUE_ZOOM_MINIMUM_DP}.
+     *
+     * @param value The {@link String} value to convert.
+     * @return Returns the internal value for value.
+     */
+    public static int getZoomMinimumDpInternalPropertyValueFromValue(String value) {
+        return SharedProperties.getDefaultIfNotInRange(TermuxPropertyConstants.KEY_ZOOM_MINIMUM_DP,
+            DataUtils.getIntFromString(value, TermuxPropertyConstants.DEFAULT_IVALUE_ZOOM_MINIMUM_DP),
+            TermuxPropertyConstants.DEFAULT_IVALUE_ZOOM_MINIMUM_DP,
+            TermuxPropertyConstants.IVALUE_ZOOM_MINIMUM_DP_MIN,
+            TermuxPropertyConstants.IVALUE_ZOOM_MINIMUM_DP_MAX,
+            true, true, LOG_TAG);
+    }
+
+    /**
+     * Returns the int for the value if its not null and is between
      * {@link TermuxPropertyConstants#IVALUE_TERMINAL_TOOLBAR_HEIGHT_SCALE_FACTOR_MIN} and
      * {@link TermuxPropertyConstants#IVALUE_TERMINAL_TOOLBAR_HEIGHT_SCALE_FACTOR_MAX},
      * otherwise returns {@link TermuxPropertyConstants#DEFAULT_IVALUE_TERMINAL_TOOLBAR_HEIGHT_SCALE_FACTOR}.
@@ -549,6 +573,16 @@ public abstract class TermuxSharedProperties {
     }
 
     /**
+     * Returns the value itself if it is not {@code null}, otherwise returns {@link TermuxPropertyConstants#DEFAULT_IVALUE_EXTRA_KEYS_PAGE_LEFT}.
+     *
+     * @param value The {@link String} value to convert.
+     * @return Returns the internal value for value.
+     */
+    public static String getExtraKeysPageLeftInternalPropertyValueFromValue(String value) {
+        return SharedProperties.getDefaultIfNullOrEmpty(value, TermuxPropertyConstants.DEFAULT_IVALUE_EXTRA_KEYS_PAGE_LEFT);
+    }
+
+    /**
      * Returns the value itself if it is not {@code null}, otherwise returns {@link TermuxPropertyConstants#DEFAULT_IVALUE_EXTRA_KEYS_STYLE}.
      *
      * @param value {@link String} value to convert.
@@ -581,6 +615,27 @@ public abstract class TermuxSharedProperties {
     }
 
     /**
+     * Returns the trimmed product name without control characters if it is not empty, otherwise returns
+     * {@link TermuxPropertyConstants#DEFAULT_IVALUE_TERMINAL_PRODUCT_NAME}.
+     *
+     * @param value {@link String} value to convert.
+     * @return Returns the internal value for value.
+     */
+    public static String getTerminalProductNameInternalPropertyValueFromValue(String value) {
+        String productName = null;
+        if (value != null) {
+            StringBuilder builder = new StringBuilder();
+            for (int i = 0; i < value.length(); i++) {
+                char c = value.charAt(i);
+                if ((c >= 0x20 && c != 0x7F) && !(c >= 0x80 && c <= 0x9F))
+                    builder.append(c);
+            }
+            productName = builder.toString().trim();
+        }
+        return SharedProperties.getDefaultIfNullOrEmpty(productName, TermuxPropertyConstants.DEFAULT_IVALUE_TERMINAL_PRODUCT_NAME);
+    }
+
+    /**
      * Returns the value itself if it is not {@code null}, otherwise returns {@link TermuxPropertyConstants#DEFAULT_IVALUE_VOLUME_KEYS_BEHAVIOUR}.
      *
      * @param value {@link String} value to convert.
@@ -608,6 +663,10 @@ public abstract class TermuxSharedProperties {
 
     public boolean areHardwareKeyboardShortcutsDisabled() {
         return (boolean) getInternalPropertyValue(TermuxPropertyConstants.KEY_DISABLE_HARDWARE_KEYBOARD_SHORTCUTS, true);
+    }
+
+    public boolean areSessionTitleChangeToastsDisabled() {
+        return (boolean) getInternalPropertyValue(TermuxPropertyConstants.KEY_DISABLE_SESSION_TITLE_CHANGE_TOAST, true);
     }
 
     public boolean areTerminalSessionChangeToastsDisabled() {
@@ -674,6 +733,10 @@ public abstract class TermuxSharedProperties {
         return (int) getInternalPropertyValue(TermuxPropertyConstants.KEY_TERMINAL_TRANSCRIPT_ROWS, true);
     }
 
+    public int getZoomMinimumDp() {
+        return (int) getInternalPropertyValue(TermuxPropertyConstants.KEY_ZOOM_MINIMUM_DP, true);
+    }
+
     public float getTerminalToolbarHeightScaleFactor() {
         return (float) getInternalPropertyValue(TermuxPropertyConstants.KEY_TERMINAL_TOOLBAR_HEIGHT_SCALE_FACTOR, true);
     }
@@ -698,6 +761,10 @@ public abstract class TermuxSharedProperties {
 
     public boolean shouldEnableDisableSoftKeyboardOnToggle() {
         return (boolean) TermuxPropertyConstants.IVALUE_SOFT_KEYBOARD_TOGGLE_BEHAVIOUR_ENABLE_DISABLE.equals(getInternalPropertyValue(TermuxPropertyConstants.KEY_SOFT_KEYBOARD_TOGGLE_BEHAVIOUR, true));
+    }
+
+    public String getTerminalProductName() {
+        return (String) getInternalPropertyValue(TermuxPropertyConstants.KEY_TERMINAL_PRODUCT_NAME, true);
     }
 
     public boolean areVirtualVolumeKeysDisabled() {

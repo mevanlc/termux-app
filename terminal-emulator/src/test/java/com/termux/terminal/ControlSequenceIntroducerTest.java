@@ -84,6 +84,21 @@ public class ControlSequenceIntroducerTest extends TerminalTestCase {
         assertEnteringStringGivesResponse("\033[16t", "\033[6;" + cellHeight + ";" + cellWidth + "t");
     }
 
+    public void testReportTerminalVersion() {
+        withTerminalSized(3, 3);
+        assertEnteringStringGivesResponse("\033[>q", "\033P>|Termux\033\\");
+        assertEnteringStringGivesResponse("\033[>0q", "\033P>|Termux\033\\");
+
+        mOutput = new MockTerminalOutput() {
+            @Override
+            public String getTerminalVersionString() {
+                return "Termux(1.2.3)";
+            }
+        };
+        withTerminalSized(3, 3);
+        assertEnteringStringGivesResponse("\033[>q", "\033P>|Termux(1.2.3)\033\\");
+    }
+
     /**
      * See <a href="https://sw.kovidgoyal.net/kitty/underlines/">Colored and styled underlines</a>:
      *

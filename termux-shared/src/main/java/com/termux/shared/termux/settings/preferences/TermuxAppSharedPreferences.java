@@ -13,6 +13,8 @@ import com.termux.shared.termux.TermuxConstants;
 import com.termux.shared.logger.Logger;
 import com.termux.shared.data.DataUtils;
 import com.termux.shared.termux.TermuxUtils;
+import com.termux.shared.termux.settings.properties.TermuxAppSharedProperties;
+import com.termux.shared.termux.settings.properties.TermuxPropertyConstants;
 import com.termux.shared.termux.settings.preferences.TermuxPreferenceConstants.TERMUX_APP;
 
 public class TermuxAppSharedPreferences extends AppSharedPreferences {
@@ -122,14 +124,27 @@ public class TermuxAppSharedPreferences extends AppSharedPreferences {
 
 
 
+    private static int getZoomMinimumDp() {
+        TermuxAppSharedProperties properties = TermuxAppSharedProperties.getProperties();
+        return properties == null ? TermuxPropertyConstants.DEFAULT_IVALUE_ZOOM_MINIMUM_DP : properties.getZoomMinimumDp();
+    }
+
     public static int[] getDefaultFontSizes(Context context) {
+        return getDefaultFontSizes(context, getZoomMinimumDp());
+    }
+
+    public static int[] getDefaultFontSizes(Context context, int zoomMinimumDp) {
+        zoomMinimumDp = DataUtils.clamp(zoomMinimumDp,
+            TermuxPropertyConstants.IVALUE_ZOOM_MINIMUM_DP_MIN,
+            TermuxPropertyConstants.IVALUE_ZOOM_MINIMUM_DP_MAX);
+
         float dipInPixels = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 1, context.getResources().getDisplayMetrics());
 
         int[] sizes = new int[3];
 
         // This is a bit arbitrary and sub-optimal. We want to give a sensible default for minimum font size
         // to prevent invisible text due to zoom be mistake:
-        sizes[1] = (int) (4f * dipInPixels); // min
+        sizes[1] = Math.max(1, (int) (zoomMinimumDp * dipInPixels)); // min
 
         // http://www.google.com/design/spec/style/typography.html#typography-line-height
         int defaultFontSize = Math.round(12 * dipInPixels);
@@ -160,13 +175,27 @@ public class TermuxAppSharedPreferences extends AppSharedPreferences {
         SharedPreferenceUtils.setIntStoredAsString(mSharedPreferences, TERMUX_APP.KEY_FONTSIZE, value, false);
     }
 
-    public void changeFontSize(boolean increase) {
-        int fontSize = getFontSize();
+    public int clampFontSize(int fontSize) {
+        return DataUtils.clamp(fontSize, MIN_FONTSIZE, MAX_FONTSIZE);
+    }
 
+    public int getChangedFontSize(int fontSize, boolean increase) {
         fontSize += (increase ? 1 : -1) * 2;
-        fontSize = Math.max(MIN_FONTSIZE, Math.min(fontSize, MAX_FONTSIZE));
+        return clampFontSize(fontSize);
+    }
 
+    public int changeFontSize(boolean increase) {
+        int fontSize = getChangedFontSize(getFontSize(), increase);
         setFontSize(fontSize);
+        return fontSize;
+    }
+
+    public boolean isZoomPerSessionEnabled() {
+        return SharedPreferenceUtils.getBoolean(mSharedPreferences, TERMUX_APP.KEY_ZOOM_PER_SESSION, TERMUX_APP.DEFAULT_VALUE_ZOOM_PER_SESSION);
+    }
+
+    public void setZoomPerSessionEnabled(boolean value) {
+        SharedPreferenceUtils.setBoolean(mSharedPreferences, TERMUX_APP.KEY_ZOOM_PER_SESSION, value, false);
     }
 
 

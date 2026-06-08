@@ -5,6 +5,7 @@ import android.content.Context;
 import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
+import android.os.SystemClock;
 import android.provider.Settings;
 import android.util.AttributeSet;
 
@@ -91,6 +92,8 @@ public final class ExtraKeysView extends GridLayout {
          * @param button The {@link MaterialButton} that was clicked.
          */
         void onExtraKeyButtonClick(View view, ExtraKeyButton buttonInfo, MaterialButton button);
+
+        default void onExtraKeyButtonCreated(ExtraKeysView extraKeysView, ExtraKeyButton buttonInfo, MaterialButton button) {}
 
         /**
          * This is called by {@link ExtraKeysView} when a button is clicked so that the client
@@ -207,6 +210,8 @@ public final class ExtraKeysView extends GridLayout {
     protected Handler mHandler;
     protected SpecialButtonsLongHoldRunnable mSpecialButtonsLongHoldRunnable;
     protected int mLongPressCount;
+    protected SpecialButton mLastTappedSpecialButton;
+    protected long mLastSpecialButtonTapTime;
 
 
     public ExtraKeysView(Context context, AttributeSet attrs) {
@@ -402,47 +407,65 @@ public final class ExtraKeysView extends GridLayout {
                 final ExtraKeyButton buttonInfo = buttons[row][col];
 
                 MaterialButton button;
-                if (isSpecialButton(buttonInfo)) {
+                boolean specialButton = isSpecialButton(buttonInfo);
+                if (specialButton) {
                     button = createSpecialButton(buttonInfo.getKey(), true);
                     if (button == null) return;
                 } else {
                     button = new MaterialButton(getContext(), null, android.R.attr.buttonBarButtonStyle);
+                    button.setTextColor(mButtonTextColor);
                 }
 
                 button.setText(buttonInfo.getDisplay());
-                button.setTextColor(mButtonTextColor);
                 button.setAllCaps(mButtonTextAllCaps);
                 button.setPadding(0, 0, 0, 0);
+                if (mExtraKeysViewClient != null)
+                    mExtraKeysViewClient.onExtraKeyButtonCreated(this, buttonInfo, button);
 
                 button.setOnClickListener(view -> {
                     performExtraKeyButtonHapticFeedback(view, buttonInfo, button);
                     onAnyExtraKeyButtonClick(view, buttonInfo, button);
                 });
 
+                final boolean[] isSwipeUpActive = {false};
+                final boolean[] wasSwipeUpActivated = {false};
                 button.setOnTouchListener((view, event) -> {
                     switch (event.getAction()) {
                         case MotionEvent.ACTION_DOWN:
+                            isSwipeUpActive[0] = false;
+                            wasSwipeUpActivated[0] = false;
                             view.setBackgroundColor(mButtonActiveBackgroundColor);
                             // Start long press scheduled executors which will be stopped in next MotionEvent
                             startScheduledExecutors(view, buttonInfo, button);
                             return true;
 
                         case MotionEvent.ACTION_MOVE:
-                            if (buttonInfo.getPopup() != null) {
-                                // Show popup on swipe up
-                                if (mPopupWindow == null && event.getY() < 0) {
+                            if (event.getY() < 0) {
+                                if (!isSwipeUpActive[0]) {
                                     stopScheduledExecutors();
                                     view.setBackgroundColor(mButtonBackgroundColor);
-                                    showPopup(view, buttonInfo.getPopup());
                                 }
-                                if (mPopupWindow != null && event.getY() > 0) {
-                                    view.setBackgroundColor(mButtonActiveBackgroundColor);
+                                isSwipeUpActive[0] = true;
+                                wasSwipeUpActivated[0] = true;
+
+                                if (buttonInfo.getPopup() != null) {
+                                    // Show popup on swipe up
+                                    if (mPopupWindow == null) {
+                                        showPopup(view, buttonInfo.getPopup());
+                                    }
+                                }
+                            } else if (isSwipeUpActive[0]) {
+                                isSwipeUpActive[0] = false;
+                                view.setBackgroundColor(mButtonActiveBackgroundColor);
+                                if (mPopupWindow != null) {
                                     dismissPopup();
                                 }
                             }
                             return true;
 
                         case MotionEvent.ACTION_CANCEL:
+                            isSwipeUpActive[0] = false;
+                            wasSwipeUpActivated[0] = false;
                             view.setBackgroundColor(mButtonBackgroundColor);
                             stopScheduledExecutors();
                             return true;
@@ -458,10 +481,15 @@ public final class ExtraKeysView extends GridLayout {
                                     if (buttonInfo.getPopup() != null) {
                                         onAnyExtraKeyButtonClick(view, buttonInfo.getPopup(), button);
                                     }
+                                } else if (wasSwipeUpActivated[0] || isSwipeUpActive[0] || event.getY() < 0) {
+                                    isSwipeUpActive[0] = false;
+                                    wasSwipeUpActivated[0] = false;
                                 } else {
                                     view.performClick();
                                 }
                             }
+                            isSwipeUpActive[0] = false;
+                            wasSwipeUpActivated[0] = false;
                             return true;
 
                         default:
@@ -519,16 +547,39 @@ public final class ExtraKeysView extends GridLayout {
     public void onAnyExtraKeyButtonClick(View view, @NonNull ExtraKeyButton buttonInfo, MaterialButton button) {
         if (isSpecialButton(buttonInfo)) {
             if (mLongPressCount > 0) return;
-            SpecialButtonState state = mSpecialButtons.get(SpecialButton.valueOf(buttonInfo.getKey()));
+            SpecialButton specialButton = SpecialButton.valueOf(buttonInfo.getKey());
+            SpecialButtonState state = mSpecialButtons.get(specialButton);
             if (state == null) return;
+
+            long tapTime = SystemClock.uptimeMillis();
+            if (isRapidDoubleTapOnActiveUnlockedSpecialButton(specialButton, state, tapTime)) {
+                state.setIsLocked(true);
+                mLastTappedSpecialButton = null;
+                mLastSpecialButtonTapTime = 0;
+                return;
+            }
 
             // Toggle active state and disable lock state if new state is not active
             state.setIsActive(!state.isActive);
-            if (!state.isActive)
+            if (!state.isActive) {
                 state.setIsLocked(false);
+                mLastTappedSpecialButton = null;
+                mLastSpecialButtonTapTime = 0;
+            } else {
+                mLastTappedSpecialButton = specialButton;
+                mLastSpecialButtonTapTime = tapTime;
+            }
         } else {
             onExtraKeyButtonClick(view, buttonInfo, button);
         }
+    }
+
+    private boolean isRapidDoubleTapOnActiveUnlockedSpecialButton(SpecialButton specialButton,
+                                                                  SpecialButtonState state,
+                                                                  long tapTime) {
+        return state.isActive && !state.isLocked &&
+            specialButton == mLastTappedSpecialButton &&
+            tapTime - mLastSpecialButtonTapTime <= ViewConfiguration.getDoubleTapTimeout();
     }
 
 
@@ -659,7 +710,7 @@ public final class ExtraKeysView extends GridLayout {
         if (state == null) return null;
         state.setIsCreated(true);
         MaterialButton button = new MaterialButton(getContext(), null, android.R.attr.buttonBarButtonStyle);
-        button.setTextColor(state.isActive ? mButtonActiveTextColor : mButtonTextColor);
+        state.updateButtonState(button);
         if (needUpdate) {
             state.buttons.add(button);
         }

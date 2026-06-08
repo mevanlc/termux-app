@@ -28,6 +28,7 @@ import com.termux.shared.termux.terminal.TermuxTerminalViewClientBase;
 import com.termux.shared.termux.extrakeys.SpecialButton;
 import com.termux.shared.android.AndroidUtils;
 import com.termux.shared.termux.TermuxConstants;
+import com.termux.shared.termux.shell.command.runner.terminal.TermuxSession;
 import com.termux.shared.activities.ReportActivity;
 import com.termux.shared.models.ReportInfo;
 import com.termux.app.models.UserAction;
@@ -104,6 +105,8 @@ public class TermuxTerminalViewClient extends TermuxTerminalViewClientBase {
         // Piggyback on the terminal view key logging toggle for now, should add a separate toggle in future
         mActivity.getTermuxActivityRootView().setIsRootViewLoggingEnabled(isTerminalViewKeyLoggingEnabled);
         ViewUtils.setIsViewUtilsLoggingEnabled(isTerminalViewKeyLoggingEnabled);
+
+        mTermuxTerminalSessionActivityClient.applyCurrentSessionFontSize();
     }
 
     /**
@@ -138,6 +141,7 @@ public class TermuxTerminalViewClient extends TermuxTerminalViewClientBase {
      */
     public void onReloadProperties() {
         setSessionShortcuts();
+        mTermuxTerminalSessionActivityClient.applyCurrentSessionFontSize();
     }
 
     /**
@@ -204,6 +208,29 @@ public class TermuxTerminalViewClient extends TermuxTerminalViewClientBase {
             else
                 Logger.logVerbose(LOG_TAG, "Not showing soft keyboard onSingleTapUp since its disabled");
         }
+    }
+
+    @Override
+    public String getUrlForTextSelection(String selectedText) {
+        return extractUrlFromTextSelection(selectedText);
+    }
+
+    @Override
+    public void onOpenUrl(String url) {
+        ShareUtils.openUrl(mActivity, url);
+    }
+
+    public static String extractUrlFromTextSelection(String selectedText) {
+        if (selectedText == null) return null;
+
+        String trimmedSelectedText = selectedText.trim();
+        if (trimmedSelectedText.isEmpty()) return null;
+
+        LinkedHashSet<CharSequence> urlSet = TermuxUrlUtils.extractUrls(trimmedSelectedText);
+        if (urlSet.size() != 1) return null;
+
+        String url = urlSet.iterator().next().toString();
+        return trimmedSelectedText.equals(url) ? url : null;
     }
 
     @Override
@@ -517,8 +544,24 @@ public class TermuxTerminalViewClient extends TermuxTerminalViewClientBase {
 
 
     public void changeFontSize(boolean increase) {
-        mActivity.getPreferences().changeFontSize(increase);
-        mActivity.getTerminalView().setTextSize(mActivity.getPreferences().getFontSize());
+        int fontSize;
+        if (mActivity.getPreferences().isZoomPerSessionEnabled()) {
+            TermuxSession termuxSession = getCurrentTermuxSession();
+            fontSize = mActivity.getPreferences().getChangedFontSize(
+                mTermuxTerminalSessionActivityClient.getFontSizeForTermuxSession(termuxSession), increase);
+            if (termuxSession != null)
+                termuxSession.setFontSize(fontSize);
+        } else {
+            fontSize = mActivity.getPreferences().changeFontSize(increase);
+        }
+
+        mActivity.getTerminalView().setTextSize(fontSize);
+    }
+
+    private TermuxSession getCurrentTermuxSession() {
+        if (mActivity.getTermuxService() == null) return null;
+
+        return mActivity.getTermuxService().getTermuxSessionForTerminalSession(mActivity.getCurrentSession());
     }
 
 
@@ -810,6 +853,16 @@ public class TermuxTerminalViewClient extends TermuxTerminalViewClientBase {
         String text = ShareUtils.getTextStringFromClipboardIfSet(mActivity, true);
         if (text != null)
             session.getEmulator().paste(text);
+    }
+
+    public void doPasteWithNewlines() {
+        TerminalSession session = mActivity.getCurrentSession();
+        if (session == null) return;
+        if (!session.isRunning()) return;
+
+        String text = ShareUtils.getTextStringFromClipboardIfSet(mActivity, true);
+        if (text != null)
+            session.getEmulator().pasteWithNewlines(text);
     }
 
 }

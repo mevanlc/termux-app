@@ -30,6 +30,8 @@ import java.util.UUID;
  */
 public final class TerminalSession extends TerminalOutput {
 
+    private static final String TERMUX_APP_VERSION_NAME_ENV_PREFIX = "TERMUX_APP__VERSION_NAME=";
+
     private static final int MSG_NEW_INPUT = 1;
     private static final int MSG_PROCESS_EXITED = 4;
 
@@ -75,6 +77,7 @@ public final class TerminalSession extends TerminalOutput {
     private final String[] mArgs;
     private final String[] mEnv;
     private final Integer mTranscriptRows;
+    private String mTerminalProductName = "Termux";
 
 
     private static final String LOG_TAG = "TerminalSession";
@@ -177,6 +180,29 @@ public final class TerminalSession extends TerminalOutput {
     @Override
     public void write(byte[] data, int offset, int count) {
         if (mShellPid > 0) mTerminalToProcessIOQueue.write(data, offset, count);
+    }
+
+    @Override
+    public String getTerminalVersionString() {
+        if (mEnv != null) {
+            for (String variable : mEnv) {
+                if (variable.startsWith(TERMUX_APP_VERSION_NAME_ENV_PREFIX)) {
+                    String versionName = variable.substring(TERMUX_APP_VERSION_NAME_ENV_PREFIX.length());
+                    if (!versionName.isEmpty())
+                        return mTerminalProductName + "(" + versionName + ")";
+                }
+            }
+        }
+
+        return mTerminalProductName;
+    }
+
+    public void setTerminalProductName(String terminalProductName) {
+        if (terminalProductName != null) {
+            String productName = terminalProductName.trim();
+            if (!productName.isEmpty())
+                mTerminalProductName = productName;
+        }
     }
 
     /** Write the Unicode code point to the terminal encoded in UTF-8. */
