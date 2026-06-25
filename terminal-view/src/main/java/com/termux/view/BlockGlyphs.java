@@ -34,6 +34,8 @@ final class BlockGlyphs {
     private static final int QUARTER_BLOCK_PARTIAL_END = QUARTER_BLOCK_PARTIAL_START + 15;
     private static final int SEPARATED_SEXTANT_START = 0x1CE51;
     private static final int SEPARATED_SEXTANT_END = SEPARATED_SEXTANT_START + 62;
+    private static final int SEXTANT_KIND_COLUMNS = 2;
+    private static final int SEXTANT_KIND_ROWS = 3;
 
     private static final int OCTANT_A = 1;
     private static final int OCTANT_B = 2;
@@ -147,45 +149,64 @@ final class BlockGlyphs {
         invert(OCTANT_M), invert(OCTANT_A), OCTANT_B | OCTANT_C, OCTANT_N | OCTANT_O,
     };
 
+    private static final int[] OCTANT_SPECS = buildOctantSpecs();
+    private static final int OCTANT_LEGACY_LEFT_SPEC = pack(2, 4, octantMaskToRowMajor(OCTANT_MAPPING[0xe6]), false);
+    private static final int OCTANT_LEGACY_RIGHT_SPEC = pack(2, 4, octantMaskToRowMajor(OCTANT_MAPPING[0xe7]), false);
+    private static final int[] SEXTANT_RANGE_1_SPECS = buildLinearSpecs(SEXTANT_KIND_COLUMNS, SEXTANT_KIND_ROWS,
+        SEXTANT_RANGE_1_END - SEXTANT_RANGE_1_START + 1, 1, 0, false);
+    private static final int[] SEXTANT_RANGE_2_SPECS = buildLinearSpecs(SEXTANT_KIND_COLUMNS, SEXTANT_KIND_ROWS,
+        SEXTANT_RANGE_2_END - SEXTANT_RANGE_2_START + 1, SEXTANT_RANGE_2_START - SEXTANT_RANGE_1_START + 2, 0, false);
+    private static final int[] SEXTANT_RANGE_3_SPECS = buildLinearSpecs(SEXTANT_KIND_COLUMNS, SEXTANT_KIND_ROWS,
+        SEXTANT_RANGE_3_END - SEXTANT_RANGE_3_START + 1, SEXTANT_RANGE_3_START - SEXTANT_RANGE_1_START + 3, 0, false);
+    private static final int[] VERTICAL_ONE_EIGHTH_SPECS = buildLinearSpecs(8, 1,
+        VERTICAL_ONE_EIGHTH_END - VERTICAL_ONE_EIGHTH_START + 1, 0, 1, false);
+    private static final int[] HORIZONTAL_ONE_EIGHTH_SPECS = buildLinearSpecs(1, 8,
+        HORIZONTAL_ONE_EIGHTH_END - HORIZONTAL_ONE_EIGHTH_START + 1, 0, 1, false);
+    private static final int[] UPPER_FRACTIONAL_BLOCK_SPECS = buildMaskSpecs(1, 8, UPPER_FRACTIONAL_BLOCK_MASKS, false);
+    private static final int[] RIGHT_FRACTIONAL_BLOCK_SPECS = buildMaskSpecs(8, 1, RIGHT_FRACTIONAL_BLOCK_MASKS, false);
+    private static final int[] QUARTER_BLOCK_PARTIAL_SPECS = buildMaskSpecs(4, 4, QUARTER_BLOCK_PARTIAL_MASKS, false);
+    private static final int[] SEPARATED_SEXTANT_SPECS = buildLinearSpecs(SEXTANT_KIND_COLUMNS, SEXTANT_KIND_ROWS,
+        SEPARATED_SEXTANT_END - SEPARATED_SEXTANT_START + 1, 1, 0, true);
+
     private BlockGlyphs() {
     }
 
     static int getSpec(int codePoint) {
         if (codePoint >= OCTANT_START && codePoint <= OCTANT_END)
-            return pack(2, 4, octantMaskToRowMajor(OCTANT_MAPPING[codePoint - OCTANT_START]), false);
+            return OCTANT_SPECS[codePoint - OCTANT_START];
 
         if (codePoint == OCTANT_LEGACY_LEFT)
-            return pack(2, 4, octantMaskToRowMajor(OCTANT_MAPPING[0xe6]), false);
+            return OCTANT_LEGACY_LEFT_SPEC;
 
         if (codePoint == OCTANT_LEGACY_RIGHT)
-            return pack(2, 4, octantMaskToRowMajor(OCTANT_MAPPING[0xe7]), false);
+            return OCTANT_LEGACY_RIGHT_SPEC;
 
         if (codePoint >= SEXTANT_RANGE_1_START && codePoint <= SEXTANT_RANGE_1_END)
-            return pack(2, 3, codePoint - SEXTANT_RANGE_1_START + 1, false);
+            return SEXTANT_RANGE_1_SPECS[codePoint - SEXTANT_RANGE_1_START];
 
         if (codePoint >= SEXTANT_RANGE_2_START && codePoint <= SEXTANT_RANGE_2_END)
-            return pack(2, 3, codePoint - SEXTANT_RANGE_1_START + 2, false);
+            return SEXTANT_RANGE_2_SPECS[codePoint - SEXTANT_RANGE_2_START];
 
         if (codePoint >= SEXTANT_RANGE_3_START && codePoint <= SEXTANT_RANGE_3_END)
-            return pack(2, 3, codePoint - SEXTANT_RANGE_1_START + 3, false);
+            return SEXTANT_RANGE_3_SPECS[codePoint - SEXTANT_RANGE_3_START];
 
         if (codePoint >= VERTICAL_ONE_EIGHTH_START && codePoint <= VERTICAL_ONE_EIGHTH_END)
-            return pack(8, 1, 1 << (codePoint - VERTICAL_ONE_EIGHTH_START + 1), false);
+            return VERTICAL_ONE_EIGHTH_SPECS[codePoint - VERTICAL_ONE_EIGHTH_START];
 
         if (codePoint >= HORIZONTAL_ONE_EIGHTH_START && codePoint <= HORIZONTAL_ONE_EIGHTH_END)
-            return pack(1, 8, 1 << (codePoint - HORIZONTAL_ONE_EIGHTH_START + 1), false);
+            return HORIZONTAL_ONE_EIGHTH_SPECS[codePoint - HORIZONTAL_ONE_EIGHTH_START];
 
         if (codePoint >= UPPER_FRACTIONAL_BLOCK_START && codePoint <= UPPER_FRACTIONAL_BLOCK_END)
-            return pack(1, 8, UPPER_FRACTIONAL_BLOCK_MASKS[codePoint - UPPER_FRACTIONAL_BLOCK_START], false);
+            return UPPER_FRACTIONAL_BLOCK_SPECS[codePoint - UPPER_FRACTIONAL_BLOCK_START];
 
         if (codePoint >= RIGHT_FRACTIONAL_BLOCK_START && codePoint <= RIGHT_FRACTIONAL_BLOCK_END)
-            return pack(8, 1, RIGHT_FRACTIONAL_BLOCK_MASKS[codePoint - RIGHT_FRACTIONAL_BLOCK_START], false);
+            return RIGHT_FRACTIONAL_BLOCK_SPECS[codePoint - RIGHT_FRACTIONAL_BLOCK_START];
 
         if (codePoint >= QUARTER_BLOCK_PARTIAL_START && codePoint <= QUARTER_BLOCK_PARTIAL_END)
-            return pack(4, 4, QUARTER_BLOCK_PARTIAL_MASKS[codePoint - QUARTER_BLOCK_PARTIAL_START], false);
+            return QUARTER_BLOCK_PARTIAL_SPECS[codePoint - QUARTER_BLOCK_PARTIAL_START];
 
         if (codePoint >= SEPARATED_SEXTANT_START && codePoint <= SEPARATED_SEXTANT_END)
-            return pack(2, 3, codePoint - SEPARATED_SEXTANT_START + 1, true);
+            return SEPARATED_SEXTANT_SPECS[codePoint - SEPARATED_SEXTANT_START];
 
         return UNSUPPORTED;
     }
@@ -208,6 +229,29 @@ final class BlockGlyphs {
 
     private static int pack(int columns, int rows, int mask, boolean separated) {
         return (mask << MASK_SHIFT) | (columns << COLUMNS_SHIFT) | (rows << ROWS_SHIFT) | (separated ? (1 << SEPARATED_SHIFT) : 0);
+    }
+
+    private static int[] buildOctantSpecs() {
+        int[] specs = new int[OCTANT_END - OCTANT_START + 1];
+        for (int i = 0; i < specs.length; i++)
+            specs[i] = pack(2, 4, octantMaskToRowMajor(OCTANT_MAPPING[i]), false);
+        return specs;
+    }
+
+    private static int[] buildLinearSpecs(int columns, int rows, int count, int maskStart, int maskShiftOffset, boolean separated) {
+        int[] specs = new int[count];
+        for (int i = 0; i < count; i++) {
+            int mask = maskShiftOffset == 0 ? maskStart + i : 1 << (i + maskShiftOffset);
+            specs[i] = pack(columns, rows, mask, separated);
+        }
+        return specs;
+    }
+
+    private static int[] buildMaskSpecs(int columns, int rows, int[] masks, boolean separated) {
+        int[] specs = new int[masks.length];
+        for (int i = 0; i < masks.length; i++)
+            specs[i] = pack(columns, rows, masks[i], separated);
+        return specs;
     }
 
     private static int octantMaskToRowMajor(int octantMask) {
