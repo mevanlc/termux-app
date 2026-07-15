@@ -2,6 +2,7 @@ package com.termux.view;
 
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
+import android.graphics.ColorMatrixColorFilter;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.PorterDuff;
@@ -27,7 +28,9 @@ public final class TerminalRenderer {
 
     final int mTextSize;
     final Typeface mTypeface;
+    final float mBrightness;
     private final Paint mTextPaint = new Paint();
+    private final Paint mBitmapPaint = new Paint();
 
     /** The width of a single mono spaced character obtained by {@link Paint#measureText(String)} on a single 'X'. */
     final float mFontWidth;
@@ -44,13 +47,22 @@ public final class TerminalRenderer {
     private boolean mBlockGlyphBatchActive;
     private int mBlockGlyphBatchColor;
 
-    public TerminalRenderer(int textSize, Typeface typeface) {
+    public TerminalRenderer(int textSize, Typeface typeface, float brightness) {
         mTextSize = textSize;
         mTypeface = typeface;
+        mBrightness = brightness;
 
         mTextPaint.setTypeface(typeface);
         mTextPaint.setAntiAlias(true);
         mTextPaint.setTextSize(textSize);
+        if (brightness != 1.f) {
+            mBitmapPaint.setColorFilter(new ColorMatrixColorFilter(new float[] {
+                brightness, 0, 0, 0, 0,
+                0, brightness, 0, 0, 0,
+                0, 0, brightness, 0, 0,
+                0, 0, 0, 1, 0
+            }));
+        }
 
         mFontLineSpacing = (int) Math.ceil(mTextPaint.getFontSpacing());
         mFontAscent = (int) Math.ceil(mTextPaint.ascent());
@@ -76,9 +88,10 @@ public final class TerminalRenderer {
         final TerminalBuffer screen = mEmulator.getScreen();
         final int[] palette = mEmulator.mColors.mCurrentColors;
         final int cursorShape = mEmulator.getCursorStyle();
+        final int defaultBackground = palette[TextStyle.COLOR_INDEX_BACKGROUND];
 
         if (reverseVideo)
-            canvas.drawColor(palette[TextStyle.COLOR_INDEX_FOREGROUND], PorterDuff.Mode.SRC);
+            canvas.drawColor(applyBrightness(palette[TextStyle.COLOR_INDEX_FOREGROUND], defaultBackground), PorterDuff.Mode.SRC);
 
         float heightOffset = mFontLineSpacingAndAscent;
         for (int row = topRow; row < endRow; row++) {
@@ -118,7 +131,7 @@ public final class TerminalRenderer {
                         float top = heightOffset - mFontLineSpacing;
                         Rect bitmapSrcRect = mEmulator.getScreen().getSixelRect(style);
                         RectF bitmapDestRect = new RectF(left, top, left + mFontWidth, top + mFontLineSpacing);
-                        canvas.drawBitmap(bitmap, bitmapSrcRect, bitmapDestRect, null);
+                        canvas.drawBitmap(bitmap, bitmapSrcRect, bitmapDestRect, mBrightness == 1.f ? null : mBitmapPaint);
                     }
                     column += 1;
                     measuredWidthForRun = 0.f;
@@ -274,12 +287,12 @@ public final class TerminalRenderer {
 
         if (backColor != palette[TextStyle.COLOR_INDEX_BACKGROUND]) {
             // Only draw non-default background.
-            mTextPaint.setColor(backColor);
+            mTextPaint.setColor(applyBrightness(backColor, palette[TextStyle.COLOR_INDEX_BACKGROUND]));
             canvas.drawRect(left, y - mFontLineSpacingAndAscent + mFontAscent, right, y, mTextPaint);
         }
 
         if (cursor != 0) {
-            mTextPaint.setColor(cursor);
+            mTextPaint.setColor(applyBrightness(cursor, palette[TextStyle.COLOR_INDEX_BACKGROUND]));
             float cursorHeight = mFontLineSpacingAndAscent - mFontAscent;
             if (cursorStyle == TerminalEmulator.TERMINAL_CURSOR_STYLE_UNDERLINE) cursorHeight /= 4.f;
             else if (cursorStyle == TerminalEmulator.TERMINAL_CURSOR_STYLE_BAR) right -= (((right - left) * 3) / 4.f);
@@ -303,7 +316,7 @@ public final class TerminalRenderer {
             mTextPaint.setUnderlineText(underline);
             mTextPaint.setTextSkewX(italic ? -0.35f : 0.f);
             mTextPaint.setStrikeThruText(strikeThrough);
-            mTextPaint.setColor(foreColor);
+            mTextPaint.setColor(applyBrightness(foreColor, palette[TextStyle.COLOR_INDEX_BACKGROUND]));
 
             // The text alignment is the default Paint.Align.LEFT.
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -348,12 +361,12 @@ public final class TerminalRenderer {
         float bottom = y;
 
         if (backColor != palette[TextStyle.COLOR_INDEX_BACKGROUND]) {
-            mTextPaint.setColor(backColor);
+            mTextPaint.setColor(applyBrightness(backColor, palette[TextStyle.COLOR_INDEX_BACKGROUND]));
             canvas.drawRect(left, top, right, bottom, mTextPaint);
         }
 
         if (cursor != 0) {
-            mTextPaint.setColor(cursor);
+            mTextPaint.setColor(applyBrightness(cursor, palette[TextStyle.COLOR_INDEX_BACKGROUND]));
             float cursorHeight = mFontLineSpacingAndAscent - mFontAscent;
             float cursorRight = right;
             if (cursorStyle == TerminalEmulator.TERMINAL_CURSOR_STYLE_UNDERLINE) cursorHeight /= 4.f;
@@ -374,7 +387,7 @@ public final class TerminalRenderer {
 
             if (cursor != 0 || underline || strikeThrough) {
                 flushBlockGlyphBatch(canvas);
-                mTextPaint.setColor(foreColor);
+                mTextPaint.setColor(applyBrightness(foreColor, palette[TextStyle.COLOR_INDEX_BACKGROUND]));
                 drawBlockGlyphCells(canvas, blockGlyphSpec, left, top, runWidthColumns);
 
                 if (underline || strikeThrough) {
@@ -389,9 +402,19 @@ public final class TerminalRenderer {
                     }
                 }
             } else {
-                appendBlockGlyphCellsToBatch(canvas, blockGlyphSpec, foreColor, left, top, runWidthColumns);
+                appendBlockGlyphCellsToBatch(canvas, blockGlyphSpec, applyBrightness(foreColor, palette[TextStyle.COLOR_INDEX_BACKGROUND]), left, top, runWidthColumns);
             }
         }
+    }
+
+    private int applyBrightness(int color, int defaultBackground) {
+        if (mBrightness == 1.f || color == defaultBackground)
+            return color;
+
+        int red = Math.min(255, Math.max(0, (int) (((0xFF & (color >> 16)) * mBrightness) + 0.5f)));
+        int green = Math.min(255, Math.max(0, (int) (((0xFF & (color >> 8)) * mBrightness) + 0.5f)));
+        int blue = Math.min(255, Math.max(0, (int) (((0xFF & color) * mBrightness) + 0.5f)));
+        return (color & 0xFF000000) | (red << 16) | (green << 8) | blue;
     }
 
     private void drawBlockGlyphCells(Canvas canvas, int blockGlyphSpec, float left, float top, int runWidthColumns) {

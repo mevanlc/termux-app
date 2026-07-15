@@ -277,6 +277,8 @@ public abstract class TermuxSharedProperties {
                 return (int) getZoomMinimumDpInternalPropertyValueFromValue(value);
 
             /* float */
+            case TermuxPropertyConstants.KEY_BRIGHTNESS:
+                return (float) getBrightnessInternalPropertyValueFromValue(value);
             case TermuxPropertyConstants.KEY_TERMINAL_TOOLBAR_HEIGHT_SCALE_FACTOR:
                 return (float) getTerminalToolbarHeightScaleFactorInternalPropertyValueFromValue(value);
 
@@ -479,6 +481,27 @@ public abstract class TermuxSharedProperties {
             TermuxPropertyConstants.DEFAULT_IVALUE_TERMINAL_TOOLBAR_HEIGHT_SCALE_FACTOR,
             TermuxPropertyConstants.IVALUE_TERMINAL_TOOLBAR_HEIGHT_SCALE_FACTOR_MIN,
             TermuxPropertyConstants.IVALUE_TERMINAL_TOOLBAR_HEIGHT_SCALE_FACTOR_MAX,
+            true, true, LOG_TAG);
+    }
+
+    /**
+     * Returns the float for the value if its not null and is between
+     * {@link TermuxPropertyConstants#IVALUE_BRIGHTNESS_MIN} and
+     * {@link TermuxPropertyConstants#IVALUE_BRIGHTNESS_MAX},
+     * otherwise returns {@link TermuxPropertyConstants#DEFAULT_IVALUE_BRIGHTNESS}.
+     *
+     * @param value The {@link String} value to convert.
+     * @return Returns the internal value for value.
+     */
+    public static float getBrightnessInternalPropertyValueFromValue(String value) {
+        float brightness = DataUtils.getFloatFromString(value, TermuxPropertyConstants.DEFAULT_IVALUE_BRIGHTNESS);
+        if (Float.isNaN(brightness) || Float.isInfinite(brightness))
+            brightness = TermuxPropertyConstants.DEFAULT_IVALUE_BRIGHTNESS;
+        return SharedProperties.getDefaultIfNotInRange(TermuxPropertyConstants.KEY_BRIGHTNESS,
+            brightness,
+            TermuxPropertyConstants.DEFAULT_IVALUE_BRIGHTNESS,
+            TermuxPropertyConstants.IVALUE_BRIGHTNESS_MIN,
+            TermuxPropertyConstants.IVALUE_BRIGHTNESS_MAX,
             true, true, LOG_TAG);
     }
 
@@ -739,6 +762,10 @@ public abstract class TermuxSharedProperties {
 
     public float getTerminalToolbarHeightScaleFactor() {
         return (float) getInternalPropertyValue(TermuxPropertyConstants.KEY_TERMINAL_TOOLBAR_HEIGHT_SCALE_FACTOR, true);
+    }
+
+    public float getBrightness() {
+        return (float) getInternalPropertyValue(TermuxPropertyConstants.KEY_BRIGHTNESS, true);
     }
 
     public boolean isBackKeyTheEscapeKey() {

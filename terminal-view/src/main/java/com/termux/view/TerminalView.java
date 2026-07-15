@@ -51,6 +51,7 @@ public final class TerminalView extends View {
     public TerminalEmulator mEmulator;
 
     public TerminalRenderer mRenderer;
+    private float mBrightness = 1.f;
 
     public TerminalViewClient mClient;
 
@@ -539,12 +540,21 @@ public final class TerminalView extends View {
 
     private void setTextSizeWithoutUpdatingTerminal(int textSize) {
         if (mRenderer == null || mRenderer.mTextSize != textSize)
-            mRenderer = new TerminalRenderer(textSize, mRenderer == null ? Typeface.MONOSPACE : mRenderer.mTypeface);
+            mRenderer = new TerminalRenderer(textSize, mRenderer == null ? Typeface.MONOSPACE : mRenderer.mTypeface, mBrightness);
     }
 
     public void setTypeface(Typeface newTypeface) {
-        mRenderer = new TerminalRenderer(mRenderer.mTextSize, newTypeface);
+        mRenderer = new TerminalRenderer(mRenderer.mTextSize, newTypeface, mBrightness);
         updateSize();
+        invalidate();
+    }
+
+    public void setBrightness(float brightness) {
+        if (mBrightness == brightness)
+            return;
+        mBrightness = brightness;
+        if (mRenderer != null)
+            mRenderer = new TerminalRenderer(mRenderer.mTextSize, mRenderer.mTypeface, mBrightness);
         invalidate();
     }
 

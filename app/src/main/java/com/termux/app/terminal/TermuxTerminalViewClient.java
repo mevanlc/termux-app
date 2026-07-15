@@ -141,6 +141,7 @@ public class TermuxTerminalViewClient extends TermuxTerminalViewClientBase {
      */
     public void onReloadProperties() {
         setSessionShortcuts();
+        mActivity.getTerminalView().setBrightness(mActivity.getProperties().getBrightness());
         mTermuxTerminalSessionActivityClient.applyCurrentSessionFontSize();
     }
 

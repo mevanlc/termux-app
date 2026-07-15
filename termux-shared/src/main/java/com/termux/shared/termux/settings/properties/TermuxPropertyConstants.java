@@ -18,7 +18,7 @@ import java.util.List;
 import java.util.Set;
 
 /*
- * Version: v0.20.0
+ * Version: v0.21.0
  * SPDX-License-Identifier: MIT
  *
  * Changelog
@@ -86,6 +86,9 @@ import java.util.Set;
  *
  * - 0.20.0 (2026-06-02)
  *      - Add `KEY_ZOOM_MINIMUM_DP`.
+ *
+ * - 0.21.0 (2026-06-25)
+ *      - Add `KEY_BRIGHTNESS`.
  */
 
 /**
@@ -291,6 +294,14 @@ public final class TermuxPropertyConstants {
 
 
 
+    /** Defines the key for the terminal color brightness scale factor */
+    public static final String KEY_BRIGHTNESS = "brightness"; // Default: "brightness"
+    public static final float IVALUE_BRIGHTNESS_MIN = 0;
+    public static final float IVALUE_BRIGHTNESS_MAX = 10;
+    public static final float DEFAULT_IVALUE_BRIGHTNESS = 1;
+
+
+
 
 
     /* Integer */
@@ -460,6 +471,7 @@ public final class TermuxPropertyConstants {
         KEY_ZOOM_MINIMUM_DP,
 
         /* float */
+        KEY_BRIGHTNESS,
         KEY_TERMINAL_TOOLBAR_HEIGHT_SCALE_FACTOR,
 
         /* Integer */
