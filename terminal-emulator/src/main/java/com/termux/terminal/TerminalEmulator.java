@@ -2684,7 +2684,7 @@ public final class TerminalEmulator {
      */
     void setOscTypeVariables() {
         if (mOscType >= 0) return;
-        if (mTerminalControlArgs.indexOf(":") < 0) return;
+        if (mTerminalControlArgs.indexOf(";") < 0) return;
 
         int value = -1;
         int argsLength = mTerminalControlArgs.length();
@@ -2701,6 +2701,13 @@ public final class TerminalEmulator {
                 mOscType = -2; // Unknown sequence.
                 return;
             }
+        }
+
+        // Wait for the iTerm image arguments delimiter before enabling its fast path and much
+        // larger control args limit. Other OSC types, including OSC 52, are known at `;`.
+        if (mOscType == 1337 && mTerminalControlArgs.indexOf(":") < 0) {
+            mOscType = -1;
+            return;
         }
 
         if (mOscType >= 0) {

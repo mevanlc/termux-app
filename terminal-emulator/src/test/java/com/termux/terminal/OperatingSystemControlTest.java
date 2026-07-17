@@ -1,8 +1,7 @@
 package com.termux.terminal;
 
-import android.util.Base64;
-
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 
@@ -137,9 +136,17 @@ public class OperatingSystemControlTest extends TerminalTestCase {
 		assertIndexColorsMatch(TerminalColors.COLOR_SCHEME.mDefaultColors);
 	}
 
-	public void disabledTestSetClipboard() {
-		// Cannot run this as a unit test since Base64 is a android.util class.
-		enterString("\033]52;c;" + Base64.encodeToString("Hello, world".getBytes(), 0) + "\007");
+	public void testOsc52SelectsExpandedControlArgsLimit() {
+		withTerminalSized(4, 4);
+
+		// Exceed the default 16KiB control args limit. `android.util.Base64` cannot decode in
+		// local JVM tests, but the BEL must still be consumed as the OSC terminator. Before OSC
+		// types were detected at their `;` delimiter, the args overflowed and BEL rang normally.
+		char[] encodedClipboardText = new char[20_000];
+		Arrays.fill(encodedClipboardText, 'A');
+		enterString("\033]52;c;" + new String(encodedClipboardText) + "\007");
+
+		assertEquals(0, mOutput.bellsRung);
 	}
 
 	public void testResettingTerminalResetsColor() throws Exception {
