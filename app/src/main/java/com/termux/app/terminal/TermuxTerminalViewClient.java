@@ -552,6 +552,7 @@ public class TermuxTerminalViewClient extends TermuxTerminalViewClientBase {
                 mTermuxTerminalSessionActivityClient.getFontSizeForTermuxSession(termuxSession), increase);
             if (termuxSession != null)
                 termuxSession.setFontSize(fontSize);
+            mTermuxTerminalSessionActivityClient.storeFontSizeOfCurrentSession(fontSize);
         } else {
             fontSize = mActivity.getPreferences().changeFontSize(increase);
         }

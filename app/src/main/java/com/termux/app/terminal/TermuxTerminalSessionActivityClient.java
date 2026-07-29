@@ -301,10 +301,13 @@ public class TermuxTerminalSessionActivityClient extends TermuxTerminalSessionCl
     public void setCurrentSession(TerminalSession session) {
         if (session == null) return;
 
-        if (mActivity.getTerminalView().attachSession(session, getFontSizeForSession(session))) {
+        int fontSize = getFontSizeForSession(session);
+        if (mActivity.getTerminalView().attachSession(session, fontSize)) {
             // notify about switched session if not already displaying the session
             notifyOfSessionChange();
         }
+
+        storeFontSizeOfCurrentSession(fontSize);
 
         // We call the following even when the session is already being displayed since config may
         // be stale, like current session not selected or scrolled to.
@@ -362,6 +365,23 @@ public class TermuxTerminalSessionActivityClient extends TermuxTerminalSessionCl
     public int getFontSizeForTermuxSession(TermuxSession termuxSession) {
         Integer fontSize = termuxSession == null ? null : termuxSession.getFontSize();
         return fontSize == null ? mActivity.getPreferences().getFontSize() : mActivity.getPreferences().clampFontSize(fontSize);
+    }
+
+    /**
+     * Store the font size of the session being displayed as the app wide font size. Per session font
+     * sizes only live as long as the {@link TermuxSession} they belong to, so without this the zoom
+     * would be lost once the last session exits and the service is destroyed, and new sessions would
+     * start at whatever font size was last stored while zoom per session was disabled. Storing the
+     * font size of the current session means a new session starts at the zoom of the session that
+     * was displayed last. Nothing to do if zoom per session is disabled, since
+     * {@link com.termux.shared.termux.settings.preferences.TermuxAppSharedPreferences#changeFontSize(boolean)}
+     * already stores the font size in that case.
+     */
+    public void storeFontSizeOfCurrentSession(int fontSize) {
+        if (!mActivity.getPreferences().isZoomPerSessionEnabled()) return;
+
+        if (mActivity.getPreferences().getFontSize() != fontSize)
+            mActivity.getPreferences().setFontSize(fontSize);
     }
 
     public void applyCurrentSessionFontSize() {
