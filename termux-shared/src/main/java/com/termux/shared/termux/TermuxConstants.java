@@ -12,7 +12,7 @@ import java.util.Formatter;
 import java.util.List;
 
 /*
- * Version: v0.53.0
+ * Version: v0.54.0
  * SPDX-License-Identifier: MIT
  *
  * Changelog
@@ -282,6 +282,9 @@ import java.util.List;
  * - 0.53.0 (2025-01-12)
  *      - Renamed `TERMUX_API`, `TERMUX_STYLING`, `TERMUX_TASKER`, `TERMUX_WIDGET` classes with `_APP` suffix added.
  *      - Added `TERMUX_*_MAIN_ACTIVITY_NAME` and `TERMUX_*_LAUNCHER_ACTIVITY_NAME` constants to each app class.
+ *
+ * - 0.54.0 (2026-07-29)
+ *      - Added `TERMUX_FONT_BOLD_FILE*`, `TERMUX_FONT_ITALIC_FILE*` and `TERMUX_FONT_BOLD_ITALIC_FILE*`.
  */
 
 /**
@@ -771,6 +774,21 @@ public final class TermuxConstants {
     public static final String TERMUX_FONT_FILE_PATH = TERMUX_DATA_HOME_DIR_PATH + "/font.ttf"; // Default: "/data/data/com.termux/files/home/.termux/font.ttf"
     /** Termux app and Termux:Styling font.ttf file */
     public static final File TERMUX_FONT_FILE = new File(TERMUX_FONT_FILE_PATH);
+
+    /** Termux app font-bold.ttf file path */
+    public static final String TERMUX_FONT_BOLD_FILE_PATH = TERMUX_DATA_HOME_DIR_PATH + "/font-bold.ttf"; // Default: "/data/data/com.termux/files/home/.termux/font-bold.ttf"
+    /** Termux app font-bold.ttf file */
+    public static final File TERMUX_FONT_BOLD_FILE = new File(TERMUX_FONT_BOLD_FILE_PATH);
+
+    /** Termux app font-italic.ttf file path */
+    public static final String TERMUX_FONT_ITALIC_FILE_PATH = TERMUX_DATA_HOME_DIR_PATH + "/font-italic.ttf"; // Default: "/data/data/com.termux/files/home/.termux/font-italic.ttf"
+    /** Termux app font-italic.ttf file */
+    public static final File TERMUX_FONT_ITALIC_FILE = new File(TERMUX_FONT_ITALIC_FILE_PATH);
+
+    /** Termux app font-bold-italic.ttf file path */
+    public static final String TERMUX_FONT_BOLD_ITALIC_FILE_PATH = TERMUX_DATA_HOME_DIR_PATH + "/font-bold-italic.ttf"; // Default: "/data/data/com.termux/files/home/.termux/font-bold-italic.ttf"
+    /** Termux app font-bold-italic.ttf file */
+    public static final File TERMUX_FONT_BOLD_ITALIC_FILE = new File(TERMUX_FONT_BOLD_ITALIC_FILE_PATH);
 
 
     /** Termux app and plugins crash log file path */

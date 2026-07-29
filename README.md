@@ -12,6 +12,8 @@ and adds:
 
 - terminal graphics: Sixel and iTerm2 inline image rendering;
 - built-in rendering of Unicode octant, sextant, and block glyphs;
+- real bold/italic terminal font variants via `font-bold.ttf`,
+  `font-italic.ttf`, and `font-bold-italic.ttf`;
 - extra-keys toolbar improvements: a second key page, double-tap modifier
   locking, swipe-up key cancellation, and a scroll-lock icon;
 - a swipe-navigable history for the toolbar text input;
@@ -56,6 +58,20 @@ sextants and separated sextants, one-eighth blocks, upper/right fractional
 blocks, and quarter-block partials. Standard box-drawing (U+2500–U+257F) and
 block elements (U+2580–U+259F) still come from the font. Consecutive
 same-color glyphs are batched into single draw calls. This is always on.
+
+### font variants
+
+In addition to upstream's `~/.termux/font.ttf`, the app loads
+`~/.termux/font-bold.ttf`, `~/.termux/font-italic.ttf`, and
+`~/.termux/font-bold-italic.ttf` when present, and uses the real variant
+glyphs for bold/italic/bold-italic terminal text. Any variant file that is
+missing (or fails to load) falls back to upstream behavior for that style:
+synthesized bold (fake-bold smearing) and/or synthesized italic (skewed
+regular glyphs). If only some variants are provided, the closest one is used —
+e.g. bold-italic text with only `font-bold.ttf` installed renders as the bold
+face skewed. Cell metrics are always taken from the regular face, so variants
+should be metrically compatible with it (faces from the same family, as with
+Nerd Font distributions, are fine). Reload with `termux-reload-settings`.
 
 ### extra-keys toolbar
 

@@ -28,6 +28,10 @@ public final class TerminalRenderer {
 
     final int mTextSize;
     final Typeface mTypeface;
+    /** Variant typefaces for styled text. Equal to {@link #mTypeface} when no separate variant font is available. */
+    final Typeface mBoldTypeface;
+    final Typeface mItalicTypeface;
+    final Typeface mBoldItalicTypeface;
     final float mBrightness;
     private final Paint mTextPaint = new Paint();
     private final Paint mBitmapPaint = new Paint();
@@ -48,8 +52,16 @@ public final class TerminalRenderer {
     private int mBlockGlyphBatchColor;
 
     public TerminalRenderer(int textSize, Typeface typeface, float brightness) {
+        this(textSize, typeface, null, null, null, brightness);
+    }
+
+    public TerminalRenderer(int textSize, Typeface typeface, Typeface boldTypeface, Typeface italicTypeface,
+                            Typeface boldItalicTypeface, float brightness) {
         mTextSize = textSize;
         mTypeface = typeface;
+        mBoldTypeface = boldTypeface == null ? typeface : boldTypeface;
+        mItalicTypeface = italicTypeface == null ? typeface : italicTypeface;
+        mBoldItalicTypeface = boldItalicTypeface == null ? typeface : boldItalicTypeface;
         mBrightness = brightness;
 
         mTextPaint.setTypeface(typeface);
@@ -312,9 +324,26 @@ public final class TerminalRenderer {
                 foreColor = 0xFF000000 + (red << 16) + (green << 8) + blue;
             }
 
-            mTextPaint.setFakeBoldText(bold);
+            // Prefer real variant typefaces; synthesize bold/italic only for styles no loaded font provides.
+            Typeface runTypeface = mTypeface;
+            boolean fakeBold = bold;
+            float textSkewX = italic ? -0.35f : 0.f;
+            if (bold && italic && mBoldItalicTypeface != mTypeface) {
+                runTypeface = mBoldItalicTypeface;
+                fakeBold = false;
+                textSkewX = 0.f;
+            } else if (bold && mBoldTypeface != mTypeface) {
+                runTypeface = mBoldTypeface;
+                fakeBold = false;
+            } else if (italic && mItalicTypeface != mTypeface) {
+                runTypeface = mItalicTypeface;
+                textSkewX = 0.f;
+            }
+
+            if (runTypeface != mTypeface) mTextPaint.setTypeface(runTypeface);
+            mTextPaint.setFakeBoldText(fakeBold);
             mTextPaint.setUnderlineText(underline);
-            mTextPaint.setTextSkewX(italic ? -0.35f : 0.f);
+            mTextPaint.setTextSkewX(textSkewX);
             mTextPaint.setStrikeThruText(strikeThrough);
             mTextPaint.setColor(applyBrightness(foreColor, palette[TextStyle.COLOR_INDEX_BACKGROUND]));
 
@@ -324,6 +353,8 @@ public final class TerminalRenderer {
             } else {
                 canvas.drawText(text, startCharIndex, runWidthChars, left, y - mFontLineSpacingAndAscent, mTextPaint);
             }
+            // Cell measurement elsewhere in the render loop relies on the paint using the regular typeface.
+            if (runTypeface != mTypeface) mTextPaint.setTypeface(mTypeface);
         }
         if (savedMatrix) canvas.restore();
     }

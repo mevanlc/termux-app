@@ -539,12 +539,24 @@ public final class TerminalView extends View {
     }
 
     private void setTextSizeWithoutUpdatingTerminal(int textSize) {
-        if (mRenderer == null || mRenderer.mTextSize != textSize)
-            mRenderer = new TerminalRenderer(textSize, mRenderer == null ? Typeface.MONOSPACE : mRenderer.mTypeface, mBrightness);
+        if (mRenderer == null) {
+            mRenderer = new TerminalRenderer(textSize, Typeface.MONOSPACE, mBrightness);
+        } else if (mRenderer.mTextSize != textSize) {
+            mRenderer = new TerminalRenderer(textSize, mRenderer.mTypeface, mRenderer.mBoldTypeface,
+                mRenderer.mItalicTypeface, mRenderer.mBoldItalicTypeface, mBrightness);
+        }
     }
 
     public void setTypeface(Typeface newTypeface) {
-        mRenderer = new TerminalRenderer(mRenderer.mTextSize, newTypeface, mBrightness);
+        setTypefaces(newTypeface, null, null, null);
+    }
+
+    /**
+     * Sets the regular typeface and optional bold/italic/bold-italic variants. A null variant falls back to the
+     * regular typeface, for which bold and italic text is then synthesized (fake bold and skew).
+     */
+    public void setTypefaces(Typeface newTypeface, Typeface boldTypeface, Typeface italicTypeface, Typeface boldItalicTypeface) {
+        mRenderer = new TerminalRenderer(mRenderer.mTextSize, newTypeface, boldTypeface, italicTypeface, boldItalicTypeface, mBrightness);
         updateSize();
         invalidate();
     }
@@ -554,7 +566,8 @@ public final class TerminalView extends View {
             return;
         mBrightness = brightness;
         if (mRenderer != null)
-            mRenderer = new TerminalRenderer(mRenderer.mTextSize, mRenderer.mTypeface, mBrightness);
+            mRenderer = new TerminalRenderer(mRenderer.mTextSize, mRenderer.mTypeface, mRenderer.mBoldTypeface,
+                mRenderer.mItalicTypeface, mRenderer.mBoldItalicTypeface, mBrightness);
         invalidate();
     }
 
