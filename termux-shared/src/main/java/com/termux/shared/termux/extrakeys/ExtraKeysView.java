@@ -9,7 +9,6 @@ import android.os.SystemClock;
 import android.provider.Settings;
 import android.util.AttributeSet;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Executors;
@@ -152,7 +151,8 @@ public final class ExtraKeysView extends GridLayout {
     protected IExtraKeysView mExtraKeysViewClient;
 
     /** The map for the {@link SpecialButton} and their {@link SpecialButtonState}. Defaults to
-     * the one returned by {@link #getDefaultSpecialButtons(ExtraKeysView)}. */
+     * the one returned by {@link #getDefaultSpecialButtons()}. A map may be shared with other
+     * {@link ExtraKeysView} instances so that they act as panels of the same keyboard. */
     protected Map<SpecialButton, SpecialButtonState> mSpecialButtons;
 
     /** The keys for the {@link SpecialButton} added to {@link #mSpecialButtons}. This is automatically
@@ -218,7 +218,7 @@ public final class ExtraKeysView extends GridLayout {
         super(context, attrs);
 
         setRepetitiveKeys(ExtraKeysConstants.PRIMARY_REPETITIVE_KEYS);
-        setSpecialButtons(getDefaultSpecialButtons(this));
+        setSpecialButtons(getDefaultSpecialButtons());
 
         setButtonColors(
             ThemeUtils.getSystemAttrColor(context, ATTR_BUTTON_TEXT_COLOR, DEFAULT_BUTTON_TEXT_COLOR),
@@ -369,12 +369,12 @@ public final class ExtraKeysView extends GridLayout {
 
     /** Get the default map that can be used for {@link #mSpecialButtons}. */
     @NonNull
-    public Map<SpecialButton, SpecialButtonState> getDefaultSpecialButtons(ExtraKeysView extraKeysView) {
+    public static Map<SpecialButton, SpecialButtonState> getDefaultSpecialButtons() {
         return new HashMap<SpecialButton, SpecialButtonState>() {{
-            put(SpecialButton.CTRL, new SpecialButtonState(extraKeysView));
-            put(SpecialButton.ALT, new SpecialButtonState(extraKeysView));
-            put(SpecialButton.SHIFT, new SpecialButtonState(extraKeysView));
-            put(SpecialButton.FN, new SpecialButtonState(extraKeysView));
+            put(SpecialButton.CTRL, new SpecialButtonState());
+            put(SpecialButton.ALT, new SpecialButtonState());
+            put(SpecialButton.SHIFT, new SpecialButtonState());
+            put(SpecialButton.FN, new SpecialButtonState());
         }};
     }
 
@@ -392,8 +392,7 @@ public final class ExtraKeysView extends GridLayout {
         if (extraKeysInfo == null)
             return;
 
-        for(SpecialButtonState state : mSpecialButtons.values())
-            state.buttons = new ArrayList<>();
+        releaseSpecialButtons();
 
         removeAllViews();
 
@@ -695,14 +694,7 @@ public final class ExtraKeysView extends GridLayout {
         SpecialButtonState state = mSpecialButtons.get(specialButton);
         if (state == null) return null;
 
-        if (!state.isCreated || !state.isActive)
-            return false;
-
-        // Disable active state only if not locked
-        if (autoSetInActive && !state.isLocked)
-            state.setIsActive(false);
-
-        return true;
+        return state.read(autoSetInActive);
     }
 
     public MaterialButton createSpecialButton(String buttonKey, boolean needUpdate) {
@@ -710,11 +702,21 @@ public final class ExtraKeysView extends GridLayout {
         if (state == null) return null;
         state.setIsCreated(true);
         MaterialButton button = new MaterialButton(getContext(), null, android.R.attr.buttonBarButtonStyle);
-        state.updateButtonState(button);
+        state.updateButtonState(this, button);
         if (needUpdate) {
-            state.buttons.add(button);
+            state.addButton(this, button);
         }
         return button;
+    }
+
+    /**
+     * Drop the buttons this view registered with its {@link SpecialButtonState}s. This must be
+     * called when the view is discarded so that a {@link #mSpecialButtons} map shared with other
+     * views does not keep it alive. It is called by {@link #reload(ExtraKeysInfo, float)} itself.
+     */
+    public void releaseSpecialButtons() {
+        for (SpecialButtonState state : mSpecialButtons.values())
+            state.removeButtonsOfView(this);
     }
 
 

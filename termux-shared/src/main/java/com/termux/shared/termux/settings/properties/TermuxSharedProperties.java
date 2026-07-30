@@ -298,10 +298,12 @@ public abstract class TermuxSharedProperties {
                 return (String) getDefaultWorkingDirectoryInternalPropertyValueFromValue(value);
             case TermuxPropertyConstants.KEY_EXTRA_KEYS:
                 return (String) getExtraKeysInternalPropertyValueFromValue(value);
-            case TermuxPropertyConstants.KEY_EXTRA_KEYS_PAGE_LEFT:
-                return (String) getExtraKeysPageLeftInternalPropertyValueFromValue(value);
+            case TermuxPropertyConstants.KEY_EXTRA_KEYS_JSON_FILE:
+                return (String) getExtraKeysJsonFileInternalPropertyValueFromValue(value);
             case TermuxPropertyConstants.KEY_EXTRA_KEYS_STYLE:
                 return (String) getExtraKeysStyleInternalPropertyValueFromValue(value);
+            case TermuxPropertyConstants.KEY_RETIRED_EXTRA_KEYS_PAGE_LEFT:
+                return (String) getRetiredExtraKeysPageLeftInternalPropertyValueFromValue(value);
             case TermuxPropertyConstants.KEY_NIGHT_MODE:
                 return (String) getNightModeInternalPropertyValueFromValue(value);
             case TermuxPropertyConstants.KEY_SOFT_KEYBOARD_TOGGLE_BEHAVIOUR:
@@ -596,13 +598,43 @@ public abstract class TermuxSharedProperties {
     }
 
     /**
-     * Returns the value itself if it is not {@code null}, otherwise returns {@link TermuxPropertyConstants#DEFAULT_IVALUE_EXTRA_KEYS_PAGE_LEFT}.
+     * Returns the absolute path of the extra keys json file, or {@code null} if the value is not
+     * set. A path that does not start with a "/" is resolved against
+     * {@link TermuxConstants#TERMUX_DATA_HOME_DIR_PATH}, and a leading "~/" against
+     * {@link TermuxConstants#TERMUX_HOME_DIR_PATH}. The file is not read or validated here, that is
+     * done when the extra keys are built.
      *
      * @param value The {@link String} value to convert.
      * @return Returns the internal value for value.
      */
-    public static String getExtraKeysPageLeftInternalPropertyValueFromValue(String value) {
-        return SharedProperties.getDefaultIfNullOrEmpty(value, TermuxPropertyConstants.DEFAULT_IVALUE_EXTRA_KEYS_PAGE_LEFT);
+    public static String getExtraKeysJsonFileInternalPropertyValueFromValue(String value) {
+        if (value == null) return null;
+
+        String path = value.trim();
+        if (path.isEmpty()) return null;
+
+        if (path.startsWith("~/"))
+            return TermuxConstants.TERMUX_HOME_DIR_PATH + path.substring(1);
+        else if (!path.startsWith("/"))
+            return TermuxConstants.TERMUX_DATA_HOME_DIR_PATH + "/" + path;
+        else
+            return path;
+    }
+
+    /**
+     * Logs a warning if the retired {@link TermuxPropertyConstants#KEY_RETIRED_EXTRA_KEYS_PAGE_LEFT}
+     * property is still set. It no longer has any effect and is never stored.
+     *
+     * @param value The {@link String} value to convert.
+     * @return Returns {@code null}.
+     */
+    public static String getRetiredExtraKeysPageLeftInternalPropertyValueFromValue(String value) {
+        if (value != null)
+            Logger.logWarn(LOG_TAG, "The \"" + TermuxPropertyConstants.KEY_RETIRED_EXTRA_KEYS_PAGE_LEFT +
+                "\" property has been retired and is ignored. Define the extra keys panels with the \"" +
+                TermuxPropertyConstants.KEY_EXTRA_KEYS_JSON_FILE + "\" or \"" +
+                TermuxPropertyConstants.KEY_EXTRA_KEYS + "\" property instead.");
+        return null;
     }
 
     /**

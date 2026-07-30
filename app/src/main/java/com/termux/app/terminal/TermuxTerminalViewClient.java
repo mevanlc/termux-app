@@ -369,8 +369,8 @@ public class TermuxTerminalViewClient extends TermuxTerminalViewClientBase {
     }
 
     public boolean readExtraKeysSpecialButton(SpecialButton specialButton) {
-        if (mActivity.getExtraKeysView() == null) return false;
-        Boolean state = mActivity.getExtraKeysView().readSpecialButton(specialButton, true);
+        if (mActivity.getTermuxTerminalExtraKeys() == null) return false;
+        Boolean state = mActivity.getTermuxTerminalExtraKeys().readSpecialButton(specialButton, true);
         if (state == null) {
             Logger.logError(LOG_TAG,"Failed to read an unregistered " + specialButton + " special button value from extra keys.");
             return false;

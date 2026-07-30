@@ -1,0 +1,78 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://termux.com/schemas/extra-keys-v2.schema.json",
+  "title": "Termux extra keys panels",
+  "description": "The named extra keys panels of the terminal toolbar. Each entry defines one panel and the panels are shown in the order they are written in. Parsed with the lax rules of org.json, so comments, unquoted names and single quoted strings are also accepted.",
+  "type": "object",
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "Informational. Not parsed by the app."
+    }
+  },
+  "additionalProperties": {
+    "title": "Panel",
+    "description": "The entry name is a descriptive name of your choosing and has no meaning to the app.",
+    "type": "object",
+    "properties": {
+      "default": {
+        "type": "boolean",
+        "description": "Show this panel when the toolbar is built. Without any panel marked, the middle panel is used, which for an even number of panels is the one before the middle.",
+        "default": false
+      },
+      "keys": {
+        "type": "array",
+        "description": "The rows of keys of the panel.",
+        "items": {
+          "type": "array",
+          "description": "A row of keys.",
+          "items": { "$ref": "#/$defs/key" }
+        }
+      },
+      "preset": {
+        "type": "string",
+        "description": "Show a built in panel instead of keys. \"text_input_view\" is the toolbar text input, which is appended as the last panel when no panel declares it. At most one panel may use it.",
+        "enum": ["text_input_view"]
+      }
+    },
+    "oneOf": [
+      { "required": ["keys"] },
+      { "required": ["preset"] }
+    ],
+    "additionalProperties": false
+  },
+  "$defs": {
+    "key": {
+      "description": "A key name, or an object describing the key.",
+      "oneOf": [
+        { "type": "string" },
+        {
+          "type": "object",
+          "properties": {
+            "key": {
+              "type": "string",
+              "description": "The name of the key, e.g. \"ESC\", \"HOME\", \"F1\". A name that is not a known key is sent to the terminal as literal text."
+            },
+            "macro": {
+              "type": "string",
+              "description": "A space separated sequence of keys to send, e.g. \"CTRL f d\". Mutually exclusive with \"key\"."
+            },
+            "display": {
+              "type": "string",
+              "description": "The text to show on the button instead of the derived one."
+            },
+            "popup": {
+              "description": "The key triggered by swiping up on this one.",
+              "$ref": "#/$defs/key"
+            }
+          },
+          "oneOf": [
+            { "required": ["key"] },
+            { "required": ["macro"] }
+          ],
+          "additionalProperties": false
+        }
+      ]
+    }
+  }
+}

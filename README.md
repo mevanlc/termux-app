@@ -14,8 +14,9 @@ and adds:
 - built-in rendering of Unicode octant, sextant, and block glyphs;
 - real bold/italic terminal font variants via `font-bold.ttf`,
   `font-italic.ttf`, and `font-bold-italic.ttf`;
-- extra-keys toolbar improvements: a second key page, double-tap modifier
-  locking, swipe-up key cancellation, and a scroll-lock icon;
+- extra-keys toolbar improvements: any number of named key panels loaded from a
+  json file, double-tap modifier locking, swipe-up key cancellation, and a
+  scroll-lock icon;
 - a swipe-navigable history for the toolbar text input;
 - per-session font zoom and a configurable minimum zoom size;
 - clipboard image paste, a "Paste with Newlines" action, and an "Open URL"
@@ -75,11 +76,8 @@ Nerd Font distributions, are fine). Reload with `termux-reload-settings`.
 
 ### extra-keys toolbar
 
-- **Second key page**: swiping the toolbar to the right reveals an additional
-  extra-keys page, configured by the `extra-keys-page-left` property with the
-  same syntax as `extra-keys`. Its default is two rows of `F1`–`F12`. Both
-  pages share `extra-keys-style` and modifier state. Page order is: left keys,
-  main keys, text input.
+- **Multiple key panels**: the toolbar can hold any number of key panels, which
+  you swipe between. See [extra-keys panels](#extra-keys-panels) below.
 - **Double-tap modifier lock**: quickly tapping `CTRL`, `ALT`, `SHIFT`, or
   `FN` twice locks it (same effect as the existing long-press lock) so it
   stays applied across keystrokes until tapped again. Locked modifiers are
@@ -94,6 +92,93 @@ Nerd Font distributions, are fine). Reload with `termux-reload-settings`.
   foreground app has mouse tracking active, horizontal finger drags are
   reported to the app as wheel-left/wheel-right events (buttons 66/67).
   Physical mouse horizontal wheels are not translated.
+
+### extra-keys panels
+
+Each page of the toolbar is a *panel*. Upstream has two — the extra keys and
+the text input view — and you swipe between them. This fork lets you define as
+many key panels as you like, in any order, with the text input view placed
+wherever you want it.
+
+Panels are declared with a json object whose entries are the panels, in the
+order they are shown. The entry name is a descriptive name of your choosing and
+has nothing to do with how the panel behaves:
+
+```json
+{
+  "$schema": "https://termux.com/schemas/extra-keys-v2.schema.json",
+  "function": {
+    "keys": [["F1", "F2", "F3", "F4", "F5", "F6"],
+             ["F7", "F8", "F9", "F10", "F11", "F12"]]
+  },
+  "main": {
+    "default": true,
+    "keys": [["ESC", "TAB", "CTRL", "ALT", "UP", "DOWN"],
+             ["LEFT", "RIGHT", "HOME", "END", "PGUP", "PGDN"]]
+  },
+  "text_input": {
+    "preset": "text_input_view"
+  }
+}
+```
+
+A panel entry sets exactly one of:
+
+- **`keys`** — the rows of keys of the panel, in the same syntax `extra-keys`
+  has always used (key names, `{key: …, popup: …}` objects, `macro`, `display`).
+- **`preset`** — the name of a built-in panel. `text_input_view` is currently
+  the only one and pulls in the toolbar text input view. Placing it yourself
+  suppresses the automatic one; at most one panel may use it.
+
+A panel may also set **`default`** to `true` to be the panel shown when the
+toolbar is built. Without any panel marked, the middle panel is used — for an
+even number of panels, the one before the middle. Panel selection is not
+per-session: it is one current panel for the whole activity, as upstream.
+
+If no panel declares `text_input_view`, one is appended as the last panel, so a
+layout of key panels alone still gets the text input view where upstream puts
+it. The toolbar is as tall as the tallest panel, and every panel shares
+`extra-keys-style` and modifier state — a `CTRL` tapped on one panel applies to
+a key tapped on another.
+
+The json is parsed with the lax rules of org.json, the same parser
+`extra-keys` has always used, so `//`, `#` and `/* */` comments, unquoted names
+and single-quoted strings are all accepted. `$schema` is informational and is
+not parsed; [`docs/extra-keys-v2.schema.json`](docs/extra-keys-v2.schema.json)
+is the matching schema, for editor completion and validation.
+
+Two properties feed the toolbar:
+
+- **`extra-keys-json-file`**: the path of a json file holding the layout. A
+  path that does not start with `/` is resolved against `~/.termux`, and a
+  leading `~/` against the Termux home directory. It takes priority over
+  `extra-keys`; if the file is missing or unreadable, a toast is shown and
+  `extra-keys` is used instead.
+- **`extra-keys`**: as upstream, but it now also accepts a panels object. A
+  file is much more comfortable for anything past a couple of panels, since
+  termux.properties needs every line but the last continued with `\`.
+
+Either source still accepts the classic top-level array of rows, which defines
+a single key panel followed by the text input view — exactly upstream's
+behavior. The two formats are told apart by the top-level json value: an array
+is the classic format, an object is panels.
+
+Both are re-read by `termux-reload-settings`, which rebuilds the panels and
+returns to the default one.
+
+The `extra-keys-page-left` property from earlier versions of this fork has been
+retired; it is ignored and logs a warning if still set. Its two-page layout is
+now expressed as two panels:
+
+```json
+{
+  "function": { "keys": [["F1", "F2", "F3", "F4", "F5", "F6"],
+                         ["F7", "F8", "F9", "F10", "F11", "F12"]] },
+  "main": { "default": true,
+            "keys": [["ESC", "/", "HOME", "UP", "END", "PGUP"],
+                     ["TAB", "CTRL", "ALT", "LEFT", "DOWN", "RIGHT"]] }
+}
+```
 
 ### toolbar text input history
 

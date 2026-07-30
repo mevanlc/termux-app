@@ -15,7 +15,8 @@ import org.json.JSONObject;
 
 /**
  * A {@link Class} that defines the info needed by {@link ExtraKeysView} to display the extra key
- * views.
+ * views of a single panel. An {@link ExtraKeysLayout} holds the ordered list of panels shown by the
+ * terminal toolbar.
  *
  * The {@code propertiesInfo} passed to the constructors of this class must be json array of arrays.
  * Each array element of the json array will be considered a separate row of keys.
@@ -108,7 +109,7 @@ public class ExtraKeysInfo {
      */
     public ExtraKeysInfo(@NonNull String propertiesInfo, String style,
                          @NonNull ExtraKeysConstants.ExtraKeyDisplayMap extraKeyAliasMap) throws JSONException {
-        mButtons = initExtraKeysInfo(propertiesInfo, getCharDisplayMapForStyle(style), extraKeyAliasMap);
+        mButtons = initExtraKeysInfo(new JSONArray(propertiesInfo), getCharDisplayMapForStyle(style), extraKeyAliasMap);
     }
 
     /**
@@ -128,14 +129,31 @@ public class ExtraKeysInfo {
     public ExtraKeysInfo(@NonNull String propertiesInfo,
                          @NonNull ExtraKeysConstants.ExtraKeyDisplayMap extraKeyDisplayMap,
                          @NonNull ExtraKeysConstants.ExtraKeyDisplayMap extraKeyAliasMap) throws JSONException {
-        mButtons = initExtraKeysInfo(propertiesInfo, extraKeyDisplayMap, extraKeyAliasMap);
+        mButtons = initExtraKeysInfo(new JSONArray(propertiesInfo), extraKeyDisplayMap, extraKeyAliasMap);
     }
 
-    private ExtraKeyButton[][] initExtraKeysInfo(@NonNull String propertiesInfo,
+    /**
+     * Initialize {@link ExtraKeysInfo} from an already parsed json array of rows. This is used by
+     * {@link ExtraKeysLayout} to build a panel from the {@link ExtraKeysLayout#KEY_KEYS} entry of a
+     * panel definition without having to serialize it back to a {@link String} first.
+     *
+     * @param rows The json array of rows. Check the class javadoc for details.
+     * @param extraKeyDisplayMap The {@link ExtraKeysConstants.ExtraKeyDisplayMap} that defines the
+     *                           display text mapping for the keys if a custom value is not defined
+     *                           by {@link ExtraKeyButton#KEY_DISPLAY_NAME} for a key.
+     * @param extraKeyAliasMap The {@link ExtraKeysConstants.ExtraKeyDisplayMap} that defines the
+     *                           aliases for the actual key names.
+     */
+    public ExtraKeysInfo(@NonNull JSONArray rows,
+                         @NonNull ExtraKeysConstants.ExtraKeyDisplayMap extraKeyDisplayMap,
+                         @NonNull ExtraKeysConstants.ExtraKeyDisplayMap extraKeyAliasMap) throws JSONException {
+        mButtons = initExtraKeysInfo(rows, extraKeyDisplayMap, extraKeyAliasMap);
+    }
+
+    private ExtraKeyButton[][] initExtraKeysInfo(@NonNull JSONArray arr,
                                                  @NonNull ExtraKeysConstants.ExtraKeyDisplayMap extraKeyDisplayMap,
                                                  @NonNull ExtraKeysConstants.ExtraKeyDisplayMap extraKeyAliasMap) throws JSONException {
-        // Convert String propertiesInfo to Array of Arrays
-        JSONArray arr = new JSONArray(propertiesInfo);
+        // Convert the json array of rows to an Array of Arrays
         Object[][] matrix = new Object[arr.length()][];
         for (int i = 0; i < arr.length(); i++) {
             JSONArray line = arr.getJSONArray(i);

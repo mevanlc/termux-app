@@ -377,13 +377,23 @@ public final class TermuxPropertyConstants {
     //public static final String DEFAULT_IVALUE_EXTRA_KEYS = "[[ESC, TAB, CTRL, ALT, {key: '-', popup: '|'}, DOWN, UP]]"; // Single row
     public static final String DEFAULT_IVALUE_EXTRA_KEYS = "[['ESC','/',{key: '-', popup: '|'},'HOME','UP','END','PGUP'], ['TAB','CTRL','ALT','LEFT','DOWN','RIGHT','PGDN']]"; // Double row
 
-    /** Defines the key for extra keys shown on the left toolbar page */
-    public static final String KEY_EXTRA_KEYS_PAGE_LEFT = "extra-keys-page-left"; // Default: "extra-keys-page-left"
-    public static final String DEFAULT_IVALUE_EXTRA_KEYS_PAGE_LEFT = "[['F1','F2','F3','F4','F5','F6'], ['F7','F8','F9','F10','F11','F12']]";
+    /** Defines the key for the path of the json file that defines the extra keys. It takes priority
+     * over {@link #KEY_EXTRA_KEYS} when it is set and the file can be read. A path that does not
+     * start with a "/" is resolved against {@link TermuxConstants#TERMUX_DATA_HOME_DIR_PATH}, and a
+     * leading "~/" against {@link TermuxConstants#TERMUX_HOME_DIR_PATH}. */
+    public static final String KEY_EXTRA_KEYS_JSON_FILE = "extra-keys-json-file"; // Default: "extra-keys-json-file"
 
     /** Defines the key for extra keys style */
     public static final String KEY_EXTRA_KEYS_STYLE =  "extra-keys-style"; // Default: "extra-keys-style"
     public static final String DEFAULT_IVALUE_EXTRA_KEYS_STYLE = "default";
+
+
+
+    /** Defines the key for the retired property that defined the extra keys of the left toolbar
+     * page. It is superseded by the named panels of {@link #KEY_EXTRA_KEYS_JSON_FILE} and
+     * {@link #KEY_EXTRA_KEYS}, and is only still loaded so that a warning can be logged if it is
+     * still set. */
+    public static final String KEY_RETIRED_EXTRA_KEYS_PAGE_LEFT = "extra-keys-page-left"; // Default: "extra-keys-page-left"
 
 
 
@@ -485,8 +495,9 @@ public final class TermuxPropertyConstants {
         KEY_CLIPBOARD_IMAGE_PASTE_DIR,
         KEY_DEFAULT_WORKING_DIRECTORY,
         KEY_EXTRA_KEYS,
-        KEY_EXTRA_KEYS_PAGE_LEFT,
+        KEY_EXTRA_KEYS_JSON_FILE,
         KEY_EXTRA_KEYS_STYLE,
+        KEY_RETIRED_EXTRA_KEYS_PAGE_LEFT,
         KEY_NIGHT_MODE,
         KEY_SOFT_KEYBOARD_TOGGLE_BEHAVIOUR,
         KEY_TERMINAL_PRODUCT_NAME,

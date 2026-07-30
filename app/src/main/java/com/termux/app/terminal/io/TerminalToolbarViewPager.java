@@ -13,14 +13,11 @@ import androidx.viewpager.widget.ViewPager;
 
 import com.termux.R;
 import com.termux.app.TermuxActivity;
+import com.termux.shared.termux.extrakeys.ExtraKeysLayout;
 import com.termux.shared.termux.extrakeys.ExtraKeysView;
 import com.termux.terminal.TerminalSession;
 
 public class TerminalToolbarViewPager {
-
-    public static final int PAGE_LEFT_KEYS = 0;
-    public static final int PAGE_EXTRA_KEYS = 1;
-    public static final int PAGE_TEXT_INPUT = 2;
 
     public static class PageAdapter extends PagerAdapter {
 
@@ -36,7 +33,7 @@ public class TerminalToolbarViewPager {
 
         @Override
         public int getCount() {
-            return 3;
+            return mActivity.getTermuxTerminalExtraKeys().getPanelCount();
         }
 
         @Override
@@ -44,25 +41,24 @@ public class TerminalToolbarViewPager {
             return view == object;
         }
 
+        @Override
+        public int getItemPosition(@NonNull Object object) {
+            // The panels are rebuilt from scratch when the properties are reloaded, so every page
+            // must be destroyed and instantiated again on notifyDataSetChanged().
+            return POSITION_NONE;
+        }
+
         @NonNull
         @Override
         public Object instantiateItem(@NonNull ViewGroup collection, int position) {
             LayoutInflater inflater = LayoutInflater.from(mActivity);
+            ExtraKeysLayout.Panel panel = mActivity.getTermuxTerminalExtraKeys().getPanel(position);
             View layout;
-            if (position == PAGE_LEFT_KEYS) {
+            if (panel != null && !panel.isTextInputView()) {
                 layout = inflater.inflate(R.layout.view_terminal_toolbar_extra_keys, collection, false);
                 ExtraKeysView extraKeysView = (ExtraKeysView) layout;
                 setupExtraKeysView(extraKeysView);
-                mActivity.setExtraKeysViewPageLeft(extraKeysView);
-                extraKeysView.reload(mActivity.getTermuxTerminalExtraKeys().getExtraKeysInfoPageLeft(),
-                    mActivity.getTerminalToolbarDefaultHeight());
-            } else if (position == PAGE_EXTRA_KEYS) {
-                layout = inflater.inflate(R.layout.view_terminal_toolbar_extra_keys, collection, false);
-                ExtraKeysView extraKeysView = (ExtraKeysView) layout;
-                setupExtraKeysView(extraKeysView);
-                mActivity.setExtraKeysView(extraKeysView);
-                extraKeysView.reload(mActivity.getTermuxTerminalExtraKeys().getExtraKeysInfo(),
-                    mActivity.getTerminalToolbarDefaultHeight());
+                extraKeysView.reload(panel.getExtraKeysInfo(), mActivity.getTerminalToolbarDefaultHeight());
             } else {
                 layout = inflater.inflate(R.layout.view_terminal_toolbar_text_input, collection, false);
                 final EditText editText = layout.findViewById(R.id.terminal_toolbar_text_input);
@@ -103,17 +99,23 @@ public class TerminalToolbarViewPager {
 
         private void setupExtraKeysView(ExtraKeysView extraKeysView) {
             extraKeysView.setExtraKeysViewClient(mActivity.getTermuxTerminalExtraKeys());
+            // Every panel shares the modifier state so that a modifier tapped on one panel applies
+            // to the keys of all of them.
+            extraKeysView.setSpecialButtons(mActivity.getTermuxTerminalExtraKeys().getSpecialButtons());
             extraKeysView.setButtonTextAllCaps(mActivity.getProperties().shouldExtraKeysTextBeAllCaps());
-
-            // apply extra keys fix if enabled in prefs
-            if (mActivity.getProperties().isUsingFullScreen() && mActivity.getProperties().isUsingFullScreenWorkAround()) {
-                FullScreenWorkAround.apply(mActivity);
-            }
         }
 
         @Override
         public void destroyItem(@NonNull ViewGroup collection, int position, @NonNull Object view) {
-            collection.removeView((View) view);
+            View layout = (View) view;
+            if (layout instanceof ExtraKeysView) {
+                ((ExtraKeysView) layout).releaseSpecialButtons();
+            } else {
+                // Keep the in progress text so that it survives a rebuild of the panels.
+                final EditText editText = layout.findViewById(R.id.terminal_toolbar_text_input);
+                if (editText != null) mSavedTextInput = editText.getText().toString();
+            }
+            collection.removeView(layout);
         }
 
         /**
@@ -215,7 +217,7 @@ public class TerminalToolbarViewPager {
 
         @Override
         public void onPageSelected(int position) {
-            if (position != PAGE_TEXT_INPUT) {
+            if (position != mActivity.getTermuxTerminalExtraKeys().getTextInputPanelIndex()) {
                 if (mPageAdapter != null) {
                     mPageAdapter.mTextInputHistory.resetNavigation();
                 }
