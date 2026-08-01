@@ -166,20 +166,6 @@ is the classic format, an object is panels.
 Both are re-read by `termux-reload-settings`, which rebuilds the panels and
 returns to the default one.
 
-The `extra-keys-page-left` property from earlier versions of this fork has been
-retired; it is ignored and logs a warning if still set. Its two-page layout is
-now expressed as two panels:
-
-```json
-{
-  "function": { "keys": [["F1", "F2", "F3", "F4", "F5", "F6"],
-                         ["F7", "F8", "F9", "F10", "F11", "F12"]] },
-  "main": { "default": true,
-            "keys": [["ESC", "/", "HOME", "UP", "END", "PGUP"],
-                     ["TAB", "CTRL", "ALT", "LEFT", "DOWN", "RIGHT"]] }
-}
-```
-
 ### toolbar text input history
 
 The toolbar's text input field keeps the last 20 submitted entries for the

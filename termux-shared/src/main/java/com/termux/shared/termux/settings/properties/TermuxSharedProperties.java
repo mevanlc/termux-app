@@ -302,8 +302,6 @@ public abstract class TermuxSharedProperties {
                 return (String) getExtraKeysJsonFileInternalPropertyValueFromValue(value);
             case TermuxPropertyConstants.KEY_EXTRA_KEYS_STYLE:
                 return (String) getExtraKeysStyleInternalPropertyValueFromValue(value);
-            case TermuxPropertyConstants.KEY_RETIRED_EXTRA_KEYS_PAGE_LEFT:
-                return (String) getRetiredExtraKeysPageLeftInternalPropertyValueFromValue(value);
             case TermuxPropertyConstants.KEY_NIGHT_MODE:
                 return (String) getNightModeInternalPropertyValueFromValue(value);
             case TermuxPropertyConstants.KEY_SOFT_KEYBOARD_TOGGLE_BEHAVIOUR:
@@ -619,22 +617,6 @@ public abstract class TermuxSharedProperties {
             return TermuxConstants.TERMUX_DATA_HOME_DIR_PATH + "/" + path;
         else
             return path;
-    }
-
-    /**
-     * Logs a warning if the retired {@link TermuxPropertyConstants#KEY_RETIRED_EXTRA_KEYS_PAGE_LEFT}
-     * property is still set. It no longer has any effect and is never stored.
-     *
-     * @param value The {@link String} value to convert.
-     * @return Returns {@code null}.
-     */
-    public static String getRetiredExtraKeysPageLeftInternalPropertyValueFromValue(String value) {
-        if (value != null)
-            Logger.logWarn(LOG_TAG, "The \"" + TermuxPropertyConstants.KEY_RETIRED_EXTRA_KEYS_PAGE_LEFT +
-                "\" property has been retired and is ignored. Define the extra keys panels with the \"" +
-                TermuxPropertyConstants.KEY_EXTRA_KEYS_JSON_FILE + "\" or \"" +
-                TermuxPropertyConstants.KEY_EXTRA_KEYS + "\" property instead.");
-        return null;
     }
 
     /**

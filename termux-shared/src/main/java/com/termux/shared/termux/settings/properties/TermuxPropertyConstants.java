@@ -389,14 +389,6 @@ public final class TermuxPropertyConstants {
 
 
 
-    /** Defines the key for the retired property that defined the extra keys of the left toolbar
-     * page. It is superseded by the named panels of {@link #KEY_EXTRA_KEYS_JSON_FILE} and
-     * {@link #KEY_EXTRA_KEYS}, and is only still loaded so that a warning can be logged if it is
-     * still set. */
-    public static final String KEY_RETIRED_EXTRA_KEYS_PAGE_LEFT = "extra-keys-page-left"; // Default: "extra-keys-page-left"
-
-
-
     /** Defines the key for {@link NightMode}. */
     public static final String KEY_NIGHT_MODE = "night-mode"; // Default: "night-mode"
 
@@ -497,7 +489,6 @@ public final class TermuxPropertyConstants {
         KEY_EXTRA_KEYS,
         KEY_EXTRA_KEYS_JSON_FILE,
         KEY_EXTRA_KEYS_STYLE,
-        KEY_RETIRED_EXTRA_KEYS_PAGE_LEFT,
         KEY_NIGHT_MODE,
         KEY_SOFT_KEYBOARD_TOGGLE_BEHAVIOUR,
         KEY_TERMINAL_PRODUCT_NAME,
