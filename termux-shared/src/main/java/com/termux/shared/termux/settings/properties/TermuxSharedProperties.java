@@ -263,6 +263,8 @@ public abstract class TermuxSharedProperties {
                 return (int) getBellBehaviourInternalPropertyValueFromValue(value);
             case TermuxPropertyConstants.KEY_DELETE_TMPDIR_FILES_OLDER_THAN_X_DAYS_ON_EXIT:
                 return (int) getDeleteTMPDIRFilesOlderThanXDaysOnExitInternalPropertyValueFromValue(value);
+            case TermuxPropertyConstants.KEY_SESSION_ROW_HEIGHT:
+                return (int) getSessionRowHeightInternalPropertyValueFromValue(value);
             case TermuxPropertyConstants.KEY_TERMINAL_CURSOR_BLINK_RATE:
                 return (int) getTerminalCursorBlinkRateInternalPropertyValueFromValue(value);
             case TermuxPropertyConstants.KEY_TERMINAL_CURSOR_STYLE:
@@ -361,6 +363,24 @@ public abstract class TermuxSharedProperties {
             TermuxPropertyConstants.DEFAULT_IVALUE_DELETE_TMPDIR_FILES_OLDER_THAN_X_DAYS_ON_EXIT,
             TermuxPropertyConstants.IVALUE_DELETE_TMPDIR_FILES_OLDER_THAN_X_DAYS_ON_EXIT_MIN,
             TermuxPropertyConstants.IVALUE_DELETE_TMPDIR_FILES_OLDER_THAN_X_DAYS_ON_EXIT_MAX,
+            true, true, LOG_TAG);
+    }
+
+    /**
+     * Returns the int for the value if its not null and is between
+     * {@link TermuxPropertyConstants#IVALUE_SESSION_ROW_HEIGHT_MIN} and
+     * {@link TermuxPropertyConstants#IVALUE_SESSION_ROW_HEIGHT_MAX},
+     * otherwise returns {@link TermuxPropertyConstants#DEFAULT_IVALUE_SESSION_ROW_HEIGHT}.
+     *
+     * @param value The {@link String} value to convert.
+     * @return Returns the internal value for value.
+     */
+    public static int getSessionRowHeightInternalPropertyValueFromValue(String value) {
+        return SharedProperties.getDefaultIfNotInRange(TermuxPropertyConstants.KEY_SESSION_ROW_HEIGHT,
+            DataUtils.getIntFromString(value, TermuxPropertyConstants.DEFAULT_IVALUE_SESSION_ROW_HEIGHT),
+            TermuxPropertyConstants.DEFAULT_IVALUE_SESSION_ROW_HEIGHT,
+            TermuxPropertyConstants.IVALUE_SESSION_ROW_HEIGHT_MIN,
+            TermuxPropertyConstants.IVALUE_SESSION_ROW_HEIGHT_MAX,
             true, true, LOG_TAG);
     }
 
@@ -748,6 +768,10 @@ public abstract class TermuxSharedProperties {
 
     public int getDeleteTMPDIRFilesOlderThanXDaysOnExit() {
         return (int) getInternalPropertyValue(TermuxPropertyConstants.KEY_DELETE_TMPDIR_FILES_OLDER_THAN_X_DAYS_ON_EXIT, true);
+    }
+
+    public int getSessionRowHeight() {
+        return (int) getInternalPropertyValue(TermuxPropertyConstants.KEY_SESSION_ROW_HEIGHT, true);
     }
 
     public int getTerminalCursorBlinkRate() {

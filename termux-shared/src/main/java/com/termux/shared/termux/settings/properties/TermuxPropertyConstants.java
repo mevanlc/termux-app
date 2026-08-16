@@ -18,7 +18,7 @@ import java.util.List;
 import java.util.Set;
 
 /*
- * Version: v0.21.0
+ * Version: v0.22.0
  * SPDX-License-Identifier: MIT
  *
  * Changelog
@@ -89,6 +89,9 @@ import java.util.Set;
  *
  * - 0.21.0 (2026-06-25)
  *      - Add `KEY_BRIGHTNESS`.
+ *
+ * - 0.22.0 (2026-08-16)
+ *      - Add `KEY_SESSION_ROW_HEIGHT`.
  */
 
 /**
@@ -249,6 +252,14 @@ public final class TermuxPropertyConstants {
     public static final int IVALUE_DELETE_TMPDIR_FILES_OLDER_THAN_X_DAYS_ON_EXIT_MIN = -1;
     public static final int IVALUE_DELETE_TMPDIR_FILES_OLDER_THAN_X_DAYS_ON_EXIT_MAX = 100000;
     public static final int DEFAULT_IVALUE_DELETE_TMPDIR_FILES_OLDER_THAN_X_DAYS_ON_EXIT = 3;
+
+
+
+    /** Defines the key for the drawer session list row height in dp units */
+    public static final String KEY_SESSION_ROW_HEIGHT = "session-row-height"; // Default: "session-row-height"
+    public static final int IVALUE_SESSION_ROW_HEIGHT_MIN = 0;
+    public static final int IVALUE_SESSION_ROW_HEIGHT_MAX = 500;
+    public static final int DEFAULT_IVALUE_SESSION_ROW_HEIGHT = 0;
 
 
 
@@ -465,6 +476,7 @@ public final class TermuxPropertyConstants {
         /* int */
         KEY_BELL_BEHAVIOUR,
         KEY_DELETE_TMPDIR_FILES_OLDER_THAN_X_DAYS_ON_EXIT,
+        KEY_SESSION_ROW_HEIGHT,
         KEY_TERMINAL_CURSOR_BLINK_RATE,
         KEY_TERMINAL_CURSOR_STYLE,
         KEY_TERMINAL_MARGIN_HORIZONTAL,

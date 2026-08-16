@@ -8,6 +8,7 @@ import android.text.SpannableString;
 import android.text.Spanned;
 import android.text.TextUtils;
 import android.text.style.StyleSpan;
+import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -20,9 +21,12 @@ import androidx.core.content.ContextCompat;
 
 import com.termux.R;
 import com.termux.app.TermuxActivity;
+import com.termux.shared.termux.settings.properties.TermuxAppSharedProperties;
+import com.termux.shared.termux.settings.properties.TermuxPropertyConstants;
 import com.termux.shared.termux.shell.command.runner.terminal.TermuxSession;
 import com.termux.shared.theme.NightMode;
 import com.termux.shared.theme.ThemeUtils;
+import com.termux.shared.view.ViewUtils;
 import com.termux.terminal.TerminalSession;
 
 import java.util.List;
@@ -39,6 +43,22 @@ public class TermuxSessionsListViewController extends ArrayAdapter<TermuxSession
         this.mActivity = activity;
     }
 
+    private int getDefaultRowHeight() {
+        TypedValue typedValue = new TypedValue();
+        if (mActivity.getTheme().resolveAttribute(android.R.attr.listPreferredItemHeight, typedValue, true)) {
+            return TypedValue.complexToDimensionPixelSize(typedValue.data, mActivity.getResources().getDisplayMetrics());
+        }
+        return Math.round(ViewUtils.dpToPx(mActivity, 48));
+    }
+
+    private int getSessionRowHeight() {
+        TermuxAppSharedProperties properties = mActivity != null ? mActivity.getProperties() : null;
+        if (properties == null) {
+            properties = TermuxAppSharedProperties.getProperties();
+        }
+        return properties != null ? properties.getSessionRowHeight() : TermuxPropertyConstants.DEFAULT_IVALUE_SESSION_ROW_HEIGHT;
+    }
+
     @SuppressLint("SetTextI18n")
     @NonNull
     @Override
@@ -50,6 +70,20 @@ public class TermuxSessionsListViewController extends ArrayAdapter<TermuxSession
         }
 
         TextView sessionTitleView = sessionRowView.findViewById(R.id.session_title);
+
+        int rowHeight = getSessionRowHeight();
+        int targetHeightPx = rowHeight > 0 ? Math.round(ViewUtils.dpToPx(mActivity, rowHeight)) : getDefaultRowHeight();
+
+        ViewGroup.LayoutParams layoutParams = sessionRowView.getLayoutParams();
+        if (layoutParams != null) {
+            layoutParams.height = targetHeightPx;
+            sessionRowView.setLayoutParams(layoutParams);
+        }
+        sessionRowView.setMinimumHeight(targetHeightPx);
+        if (sessionTitleView != null) {
+            sessionTitleView.setMinHeight(targetHeightPx);
+            sessionTitleView.setMinimumHeight(targetHeightPx);
+        }
 
         TerminalSession sessionAtRow = getItem(position).getTerminalSession();
         if (sessionAtRow == null) {

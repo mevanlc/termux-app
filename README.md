@@ -228,6 +228,10 @@ app version is included when available in the session environment.
 - OSC 52 clipboard writes accept up to 100 KB of payload (upstream limit was
   8 KB), matching Android's clipboard transaction limit; oversized sequences
   are discarded without setting the clipboard.
+- The `session-row-height` property (integer, `0`–`500` dp, default `0` for
+  system default): sets the height of drawer session-list row entries,
+  allowing increasing or reducing the default height. Applied live on
+  `termux-reload-settings`.
 - The `disable-session-title-change-toast` property (boolean, default
   `false`) suppresses the toast shown when a background session changes its
   terminal title.
