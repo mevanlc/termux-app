@@ -59,6 +59,24 @@ public class TermuxSessionsListViewController extends ArrayAdapter<TermuxSession
         return properties != null ? properties.getSessionRowHeight() : TermuxPropertyConstants.DEFAULT_IVALUE_SESSION_ROW_HEIGHT;
     }
 
+    private boolean isSessionListBottomUp() {
+        TermuxAppSharedProperties properties = mActivity != null ? mActivity.getProperties() : null;
+        if (properties == null) {
+            properties = TermuxAppSharedProperties.getProperties();
+        }
+        return properties != null && properties.isSessionListBottomUp();
+    }
+
+    @Override
+    public TermuxSession getItem(int position) {
+        if (isSessionListBottomUp()) {
+            int count = getCount();
+            return super.getItem(count - 1 - position);
+        } else {
+            return super.getItem(position);
+        }
+    }
+
     @SuppressLint("SetTextI18n")
     @NonNull
     @Override
@@ -102,7 +120,8 @@ public class TermuxSessionsListViewController extends ArrayAdapter<TermuxSession
         String name = sessionAtRow.mSessionName;
         String sessionTitle = sessionAtRow.getTitle();
 
-        String numberPart = "[" + (position + 1) + "] ";
+        int indexOfSession = isSessionListBottomUp() ? (getCount() - 1 - position) : position;
+        String numberPart = "[" + (indexOfSession + 1) + "] ";
         String sessionNamePart = (TextUtils.isEmpty(name) ? "" : name);
         String sessionTitlePart = (TextUtils.isEmpty(sessionTitle) ? "" : ((sessionNamePart.isEmpty() ? "" : "\n") + sessionTitle));
 

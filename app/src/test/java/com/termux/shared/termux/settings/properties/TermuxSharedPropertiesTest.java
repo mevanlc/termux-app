@@ -50,4 +50,30 @@ public class TermuxSharedPropertiesTest {
         Assert.assertEquals(0, defaultResult);
     }
 
+    @Test
+    public void testSessionListBottomUpConstants() {
+        Assert.assertEquals("session-list-bottom-up", TermuxPropertyConstants.KEY_SESSION_LIST_BOTTOM_UP);
+        Assert.assertTrue(TermuxPropertyConstants.TERMUX_APP_PROPERTIES_LIST.contains(TermuxPropertyConstants.KEY_SESSION_LIST_BOTTOM_UP));
+        Assert.assertTrue(TermuxPropertyConstants.TERMUX_DEFAULT_FALSE_BOOLEAN_BEHAVIOUR_PROPERTIES_LIST.contains(TermuxPropertyConstants.KEY_SESSION_LIST_BOTTOM_UP));
+    }
+
+    @Test
+    public void testSessionListBottomUpParsing() {
+        Assert.assertFalse((boolean) TermuxSharedProperties.getInternalTermuxPropertyValueFromValue(
+            null, TermuxPropertyConstants.KEY_SESSION_LIST_BOTTOM_UP, null
+        ));
+        Assert.assertFalse((boolean) TermuxSharedProperties.getInternalTermuxPropertyValueFromValue(
+            null, TermuxPropertyConstants.KEY_SESSION_LIST_BOTTOM_UP, ""
+        ));
+        Assert.assertFalse((boolean) TermuxSharedProperties.getInternalTermuxPropertyValueFromValue(
+            null, TermuxPropertyConstants.KEY_SESSION_LIST_BOTTOM_UP, "false"
+        ));
+        Assert.assertTrue((boolean) TermuxSharedProperties.getInternalTermuxPropertyValueFromValue(
+            null, TermuxPropertyConstants.KEY_SESSION_LIST_BOTTOM_UP, "true"
+        ));
+        Assert.assertTrue((boolean) TermuxSharedProperties.getInternalTermuxPropertyValueFromValue(
+            null, TermuxPropertyConstants.KEY_SESSION_LIST_BOTTOM_UP, "TRUE"
+        ));
+    }
+
 }

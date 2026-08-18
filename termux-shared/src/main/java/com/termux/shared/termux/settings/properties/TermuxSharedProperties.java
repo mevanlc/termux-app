@@ -746,6 +746,10 @@ public abstract class TermuxSharedProperties {
         return (boolean) getInternalPropertyValue(TermuxPropertyConstants.KEY_RUN_TERMUX_AM_SOCKET_SERVER, true);
     }
 
+    public boolean isSessionListBottomUp() {
+        return (boolean) getInternalPropertyValue(TermuxPropertyConstants.KEY_SESSION_LIST_BOTTOM_UP, true);
+    }
+
     public boolean shouldOpenTerminalTranscriptURLOnClick() {
         return (boolean) getInternalPropertyValue(TermuxPropertyConstants.KEY_TERMINAL_ONCLICK_URL_OPEN, true);
     }

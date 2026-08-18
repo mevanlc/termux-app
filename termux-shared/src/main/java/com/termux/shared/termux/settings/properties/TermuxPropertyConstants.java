@@ -18,7 +18,7 @@ import java.util.List;
 import java.util.Set;
 
 /*
- * Version: v0.22.0
+ * Version: v0.23.0
  * SPDX-License-Identifier: MIT
  *
  * Changelog
@@ -92,6 +92,9 @@ import java.util.Set;
  *
  * - 0.22.0 (2026-08-16)
  *      - Add `KEY_SESSION_ROW_HEIGHT`.
+ *
+ * - 0.23.0 (2026-08-18)
+ *      - Add `KEY_SESSION_LIST_BOTTOM_UP`.
  */
 
 /**
@@ -151,6 +154,11 @@ public final class TermuxPropertyConstants {
 
     /** Defines the key for whether the {@link TermuxAmSocketServer} should be run at app startup */
     public static final String KEY_RUN_TERMUX_AM_SOCKET_SERVER =  "run-termux-am-socket-server"; // Default: "run-termux-am-socket-server"
+
+
+
+    /** Defines the key for whether the drawer session list is ordered bottom-up */
+    public static final String KEY_SESSION_LIST_BOTTOM_UP = "session-list-bottom-up"; // Default: "session-list-bottom-up"
 
 
 
@@ -467,6 +475,7 @@ public final class TermuxPropertyConstants {
         KEY_EXTRA_KEYS_TEXT_ALL_CAPS,
         KEY_HIDE_SOFT_KEYBOARD_ON_STARTUP,
         KEY_RUN_TERMUX_AM_SOCKET_SERVER,
+        KEY_SESSION_LIST_BOTTOM_UP,
         KEY_TERMINAL_ONCLICK_URL_OPEN,
         KEY_USE_CTRL_SPACE_WORKAROUND,
         KEY_USE_FULLSCREEN,
@@ -521,6 +530,7 @@ public final class TermuxPropertyConstants {
         KEY_DISABLE_TERMINAL_SESSION_CHANGE_TOAST,
         KEY_ENFORCE_CHAR_BASED_INPUT,
         KEY_HIDE_SOFT_KEYBOARD_ON_STARTUP,
+        KEY_SESSION_LIST_BOTTOM_UP,
         KEY_TERMINAL_ONCLICK_URL_OPEN,
         KEY_USE_CTRL_SPACE_WORKAROUND,
         KEY_USE_FULLSCREEN,

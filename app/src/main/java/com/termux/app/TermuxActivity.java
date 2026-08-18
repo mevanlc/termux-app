@@ -452,8 +452,16 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
         if (mTermuxTerminalViewClient != null)
             mTermuxTerminalViewClient.onReloadProperties();
 
+        ListView termuxSessionsListView = findViewById(R.id.terminal_sessions_list);
+        if (termuxSessionsListView != null) {
+            termuxSessionsListView.setStackFromBottom(mProperties.isSessionListBottomUp());
+        }
+
         if (mTermuxSessionListViewController != null)
             mTermuxSessionListViewController.notifyDataSetChanged();
+
+        if (mTermuxTerminalSessionActivityClient != null && getCurrentSession() != null)
+            mTermuxTerminalSessionActivityClient.checkAndScrollToSession(getCurrentSession());
     }
 
 
@@ -506,6 +514,7 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
 
     private void setTermuxSessionsListView() {
         ListView termuxSessionsListView = findViewById(R.id.terminal_sessions_list);
+        termuxSessionsListView.setStackFromBottom(mProperties.isSessionListBottomUp());
         mTermuxSessionListViewController = new TermuxSessionsListViewController(this, mTermuxService.getTermuxSessions());
         termuxSessionsListView.setAdapter(mTermuxSessionListViewController);
         termuxSessionsListView.setOnItemClickListener(mTermuxSessionListViewController);
