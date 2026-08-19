@@ -452,6 +452,8 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
         if (mTermuxTerminalViewClient != null)
             mTermuxTerminalViewClient.onReloadProperties();
 
+        setDrawerGravity();
+
         ListView termuxSessionsListView = findViewById(R.id.terminal_sessions_list);
         if (termuxSessionsListView != null) {
             termuxSessionsListView.setStackFromBottom(mProperties.isSessionListBottomUp());
@@ -513,6 +515,7 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
     }
 
     private void setTermuxSessionsListView() {
+        setDrawerGravity();
         ListView termuxSessionsListView = findViewById(R.id.terminal_sessions_list);
         termuxSessionsListView.setStackFromBottom(mProperties.isSessionListBottomUp());
         mTermuxSessionListViewController = new TermuxSessionsListViewController(this, mTermuxService.getTermuxSessions());
@@ -651,7 +654,7 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
     @SuppressLint("RtlHardcoded")
     @Override
     public void onBackPressed() {
-        if (getDrawer().isDrawerOpen(Gravity.LEFT)) {
+        if (getDrawer().isDrawerOpen(getDrawerGravity())) {
             getDrawer().closeDrawers();
         } else {
             finishActivityIfNotFinishing();
@@ -883,6 +886,26 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
 
     public DrawerLayout getDrawer() {
         return (DrawerLayout) findViewById(R.id.drawer_layout);
+    }
+
+    public int getDrawerGravity() {
+        return mProperties != null && mProperties.isSessionListOnRight() ? Gravity.RIGHT : Gravity.LEFT;
+    }
+
+    public void setDrawerGravity() {
+        View drawer = findViewById(R.id.left_drawer);
+        if (drawer != null) {
+            DrawerLayout.LayoutParams lp = (DrawerLayout.LayoutParams) drawer.getLayoutParams();
+            int targetGravity = getDrawerGravity();
+            if (lp != null && lp.gravity != targetGravity) {
+                DrawerLayout drawerLayout = getDrawer();
+                if (drawerLayout != null) {
+                    drawerLayout.closeDrawers();
+                }
+                lp.gravity = targetGravity;
+                drawer.setLayoutParams(lp);
+            }
+        }
     }
 
 

@@ -76,4 +76,31 @@ public class TermuxSharedPropertiesTest {
         ));
     }
 
+    @Test
+    public void testSessionListSideConstants() {
+        Assert.assertEquals("session-list-side", TermuxPropertyConstants.KEY_SESSION_LIST_SIDE);
+        Assert.assertEquals("left", TermuxPropertyConstants.IVALUE_SESSION_LIST_SIDE_LEFT);
+        Assert.assertEquals("right", TermuxPropertyConstants.IVALUE_SESSION_LIST_SIDE_RIGHT);
+        Assert.assertEquals("left", TermuxPropertyConstants.DEFAULT_IVALUE_SESSION_LIST_SIDE);
+        Assert.assertTrue(TermuxPropertyConstants.TERMUX_APP_PROPERTIES_LIST.contains(TermuxPropertyConstants.KEY_SESSION_LIST_SIDE));
+    }
+
+    @Test
+    public void testSessionListSideParsing() {
+        Assert.assertEquals("left", TermuxSharedProperties.getSessionListSideInternalPropertyValueFromValue(null));
+        Assert.assertEquals("left", TermuxSharedProperties.getSessionListSideInternalPropertyValueFromValue(""));
+        Assert.assertEquals("left", TermuxSharedProperties.getSessionListSideInternalPropertyValueFromValue("left"));
+        Assert.assertEquals("left", TermuxSharedProperties.getSessionListSideInternalPropertyValueFromValue("LEFT"));
+        Assert.assertEquals("right", TermuxSharedProperties.getSessionListSideInternalPropertyValueFromValue("right"));
+        Assert.assertEquals("right", TermuxSharedProperties.getSessionListSideInternalPropertyValueFromValue("RIGHT"));
+        Assert.assertEquals("left", TermuxSharedProperties.getSessionListSideInternalPropertyValueFromValue("invalid"));
+
+        Assert.assertEquals("right", TermuxSharedProperties.getInternalTermuxPropertyValueFromValue(
+            null, TermuxPropertyConstants.KEY_SESSION_LIST_SIDE, "right"
+        ));
+        Assert.assertEquals("left", TermuxSharedProperties.getInternalTermuxPropertyValueFromValue(
+            null, TermuxPropertyConstants.KEY_SESSION_LIST_SIDE, null
+        ));
+    }
+
 }

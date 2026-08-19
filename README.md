@@ -236,6 +236,9 @@ app version is included when available in the session environment.
   the drawer session list vertically so the first session appears at the
   bottom extent of the list panel, with subsequent sessions stacked above it.
   Applied live on `termux-reload-settings`.
+- The `session-list-side` property (string, `left` or `right`, default
+  `left`): controls whether the drawer session list is anchored on the left
+  or right side of the screen. Applied live on `termux-reload-settings`.
 - The `disable-session-title-change-toast` property (boolean, default
   `false`) suppresses the toast shown when a background session changes its
   terminal title.

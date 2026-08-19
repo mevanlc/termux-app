@@ -306,6 +306,8 @@ public abstract class TermuxSharedProperties {
                 return (String) getExtraKeysStyleInternalPropertyValueFromValue(value);
             case TermuxPropertyConstants.KEY_NIGHT_MODE:
                 return (String) getNightModeInternalPropertyValueFromValue(value);
+            case TermuxPropertyConstants.KEY_SESSION_LIST_SIDE:
+                return (String) getSessionListSideInternalPropertyValueFromValue(value);
             case TermuxPropertyConstants.KEY_SOFT_KEYBOARD_TOGGLE_BEHAVIOUR:
                 return (String) getSoftKeyboardToggleBehaviourInternalPropertyValueFromValue(value);
             case TermuxPropertyConstants.KEY_TERMINAL_PRODUCT_NAME:
@@ -662,6 +664,18 @@ public abstract class TermuxSharedProperties {
     }
 
     /**
+     * Returns the value itself if it is not {@code null}, otherwise returns {@link TermuxPropertyConstants#DEFAULT_IVALUE_SESSION_LIST_SIDE}.
+     *
+     * @param value {@link String} value to convert.
+     * @return Returns the internal value for value.
+     */
+    public static String getSessionListSideInternalPropertyValueFromValue(String value) {
+        return (String) SharedProperties.getDefaultIfNotInMap(TermuxPropertyConstants.KEY_SESSION_LIST_SIDE,
+            TermuxPropertyConstants.MAP_SESSION_LIST_SIDE, SharedProperties.toLowerCase(value),
+            TermuxPropertyConstants.DEFAULT_IVALUE_SESSION_LIST_SIDE, true, LOG_TAG);
+    }
+
+    /**
      * Returns the value itself if it is not {@code null}, otherwise returns {@link TermuxPropertyConstants#DEFAULT_IVALUE_SOFT_KEYBOARD_TOGGLE_BEHAVIOUR}.
      *
      * @param value {@link String} value to convert.
@@ -826,6 +840,14 @@ public abstract class TermuxSharedProperties {
     public static String getNightMode(Context context) {
         return (String) TermuxSharedProperties.getTermuxInternalPropertyValue(context,
             TermuxPropertyConstants.KEY_NIGHT_MODE);
+    }
+
+    public String getSessionListSide() {
+        return (String) getInternalPropertyValue(TermuxPropertyConstants.KEY_SESSION_LIST_SIDE, true);
+    }
+
+    public boolean isSessionListOnRight() {
+        return TermuxPropertyConstants.IVALUE_SESSION_LIST_SIDE_RIGHT.equals(getSessionListSide());
     }
 
     public boolean shouldEnableDisableSoftKeyboardOnToggle() {

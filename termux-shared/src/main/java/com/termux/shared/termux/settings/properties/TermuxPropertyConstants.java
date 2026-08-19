@@ -18,7 +18,7 @@ import java.util.List;
 import java.util.Set;
 
 /*
- * Version: v0.23.0
+ * Version: v0.24.0
  * SPDX-License-Identifier: MIT
  *
  * Changelog
@@ -95,6 +95,9 @@ import java.util.Set;
  *
  * - 0.23.0 (2026-08-18)
  *      - Add `KEY_SESSION_LIST_BOTTOM_UP`.
+ *
+ * - 0.24.0 (2026-08-18)
+ *      - Add `KEY_SESSION_LIST_SIDE`.
  */
 
 /**
@@ -458,6 +461,22 @@ public final class TermuxPropertyConstants {
 
 
 
+    /** Defines the key for drawer session list side */
+    public static final String KEY_SESSION_LIST_SIDE = "session-list-side"; // Default: "session-list-side"
+
+    public static final String IVALUE_SESSION_LIST_SIDE_LEFT = "left";
+    public static final String IVALUE_SESSION_LIST_SIDE_RIGHT = "right";
+    public static final String DEFAULT_IVALUE_SESSION_LIST_SIDE = IVALUE_SESSION_LIST_SIDE_LEFT;
+
+    /** Defines the bidirectional map for session list side values and their internal values */
+    public static final ImmutableBiMap<String, String> MAP_SESSION_LIST_SIDE =
+        new ImmutableBiMap.Builder<String, String>()
+            .put(IVALUE_SESSION_LIST_SIDE_LEFT, IVALUE_SESSION_LIST_SIDE_LEFT)
+            .put(IVALUE_SESSION_LIST_SIDE_RIGHT, IVALUE_SESSION_LIST_SIDE_RIGHT)
+            .build();
+
+
+
 
 
     /** Defines the set for keys loaded by termux
@@ -511,6 +530,7 @@ public final class TermuxPropertyConstants {
         KEY_EXTRA_KEYS_JSON_FILE,
         KEY_EXTRA_KEYS_STYLE,
         KEY_NIGHT_MODE,
+        KEY_SESSION_LIST_SIDE,
         KEY_SOFT_KEYBOARD_TOGGLE_BEHAVIOUR,
         KEY_TERMINAL_PRODUCT_NAME,
         KEY_VOLUME_KEYS_BEHAVIOUR

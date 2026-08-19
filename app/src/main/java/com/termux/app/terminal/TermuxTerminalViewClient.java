@@ -282,9 +282,17 @@ public class TermuxTerminalViewClient extends TermuxTerminalViewClientBase {
             } else if (keyCode == KeyEvent.KEYCODE_DPAD_UP || unicodeChar == 'p' /* previous */) {
                 mTermuxTerminalSessionActivityClient.switchToSession(false);
             } else if (keyCode == KeyEvent.KEYCODE_DPAD_RIGHT) {
-                mActivity.getDrawer().openDrawer(Gravity.LEFT);
+                if (mActivity.getDrawerGravity() == Gravity.RIGHT) {
+                    mActivity.getDrawer().closeDrawers();
+                } else {
+                    mActivity.getDrawer().openDrawer(Gravity.LEFT);
+                }
             } else if (keyCode == KeyEvent.KEYCODE_DPAD_LEFT) {
-                mActivity.getDrawer().closeDrawers();
+                if (mActivity.getDrawerGravity() == Gravity.RIGHT) {
+                    mActivity.getDrawer().openDrawer(Gravity.RIGHT);
+                } else {
+                    mActivity.getDrawer().closeDrawers();
+                }
             } else if (unicodeChar == 'k'/* keyboard */) {
                 onToggleSoftKeyboardRequest();
             } else if (unicodeChar == 'm'/* menu */) {
