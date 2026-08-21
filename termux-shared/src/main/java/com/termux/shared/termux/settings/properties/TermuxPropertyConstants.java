@@ -18,7 +18,7 @@ import java.util.List;
 import java.util.Set;
 
 /*
- * Version: v0.24.0
+ * Version: v0.25.0
  * SPDX-License-Identifier: MIT
  *
  * Changelog
@@ -98,6 +98,9 @@ import java.util.Set;
  *
  * - 0.24.0 (2026-08-18)
  *      - Add `KEY_SESSION_LIST_SIDE`.
+ *
+ * - 0.25.0 (2026-08-19)
+ *      - Add `IVALUE_SESSION_LIST_SIDE_BOTH` to `KEY_SESSION_LIST_SIDE`.
  */
 
 /**
@@ -466,6 +469,7 @@ public final class TermuxPropertyConstants {
 
     public static final String IVALUE_SESSION_LIST_SIDE_LEFT = "left";
     public static final String IVALUE_SESSION_LIST_SIDE_RIGHT = "right";
+    public static final String IVALUE_SESSION_LIST_SIDE_BOTH = "both";
     public static final String DEFAULT_IVALUE_SESSION_LIST_SIDE = IVALUE_SESSION_LIST_SIDE_LEFT;
 
     /** Defines the bidirectional map for session list side values and their internal values */
@@ -473,6 +477,7 @@ public final class TermuxPropertyConstants {
         new ImmutableBiMap.Builder<String, String>()
             .put(IVALUE_SESSION_LIST_SIDE_LEFT, IVALUE_SESSION_LIST_SIDE_LEFT)
             .put(IVALUE_SESSION_LIST_SIDE_RIGHT, IVALUE_SESSION_LIST_SIDE_RIGHT)
+            .put(IVALUE_SESSION_LIST_SIDE_BOTH, IVALUE_SESSION_LIST_SIDE_BOTH)
             .build();
 
 

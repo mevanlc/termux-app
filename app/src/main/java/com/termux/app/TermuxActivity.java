@@ -18,6 +18,7 @@ import android.view.ContextMenu.ContextMenuInfo;
 import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
@@ -133,6 +134,7 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
      * The termux sessions list controller.
      */
     TermuxSessionsListViewController mTermuxSessionListViewController;
+    TermuxSessionsListViewController mTermuxSessionListViewControllerRight;
 
     /**
      * The {@link TermuxActivity} broadcast receiver for various things like terminal style configuration changes.
@@ -241,6 +243,8 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
         setTermuxTerminalViewAndClients();
 
         setTerminalToolbarView(savedInstanceState);
+
+        setDrawerLayout();
 
         setSettingsButtonView();
 
@@ -452,15 +456,23 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
         if (mTermuxTerminalViewClient != null)
             mTermuxTerminalViewClient.onReloadProperties();
 
-        setDrawerGravity();
+        setDrawerSide();
 
-        ListView termuxSessionsListView = findViewById(R.id.terminal_sessions_list);
-        if (termuxSessionsListView != null) {
-            termuxSessionsListView.setStackFromBottom(mProperties.isSessionListBottomUp());
+        ListView termuxSessionsListViewLeft = findViewById(R.id.terminal_sessions_list);
+        if (termuxSessionsListViewLeft != null) {
+            termuxSessionsListViewLeft.setStackFromBottom(mProperties.isSessionListBottomUp());
+        }
+
+        ListView termuxSessionsListViewRight = findViewById(R.id.terminal_sessions_list_right);
+        if (termuxSessionsListViewRight != null) {
+            termuxSessionsListViewRight.setStackFromBottom(mProperties.isSessionListBottomUp());
         }
 
         if (mTermuxSessionListViewController != null)
             mTermuxSessionListViewController.notifyDataSetChanged();
+
+        if (mTermuxSessionListViewControllerRight != null)
+            mTermuxSessionListViewControllerRight.notifyDataSetChanged();
 
         if (mTermuxTerminalSessionActivityClient != null && getCurrentSession() != null)
             mTermuxTerminalSessionActivityClient.checkAndScrollToSession(getCurrentSession());
@@ -515,13 +527,25 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
     }
 
     private void setTermuxSessionsListView() {
-        setDrawerGravity();
-        ListView termuxSessionsListView = findViewById(R.id.terminal_sessions_list);
-        termuxSessionsListView.setStackFromBottom(mProperties.isSessionListBottomUp());
-        mTermuxSessionListViewController = new TermuxSessionsListViewController(this, mTermuxService.getTermuxSessions());
-        termuxSessionsListView.setAdapter(mTermuxSessionListViewController);
-        termuxSessionsListView.setOnItemClickListener(mTermuxSessionListViewController);
-        termuxSessionsListView.setOnItemLongClickListener(mTermuxSessionListViewController);
+        setDrawerSide();
+
+        ListView termuxSessionsListViewLeft = findViewById(R.id.terminal_sessions_list);
+        if (termuxSessionsListViewLeft != null) {
+            termuxSessionsListViewLeft.setStackFromBottom(mProperties.isSessionListBottomUp());
+            mTermuxSessionListViewController = new TermuxSessionsListViewController(this, mTermuxService.getTermuxSessions());
+            termuxSessionsListViewLeft.setAdapter(mTermuxSessionListViewController);
+            termuxSessionsListViewLeft.setOnItemClickListener(mTermuxSessionListViewController);
+            termuxSessionsListViewLeft.setOnItemLongClickListener(mTermuxSessionListViewController);
+        }
+
+        ListView termuxSessionsListViewRight = findViewById(R.id.terminal_sessions_list_right);
+        if (termuxSessionsListViewRight != null) {
+            termuxSessionsListViewRight.setStackFromBottom(mProperties.isSessionListBottomUp());
+            mTermuxSessionListViewControllerRight = new TermuxSessionsListViewController(this, mTermuxService.getTermuxSessions());
+            termuxSessionsListViewRight.setAdapter(mTermuxSessionListViewControllerRight);
+            termuxSessionsListViewRight.setOnItemClickListener(mTermuxSessionListViewControllerRight);
+            termuxSessionsListViewRight.setOnItemLongClickListener(mTermuxSessionListViewControllerRight);
+        }
     }
 
 
@@ -618,43 +642,100 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
 
     private void setSettingsButtonView() {
         ImageButton settingsButton = findViewById(R.id.settings_button);
-        settingsButton.setOnClickListener(v -> {
-            ActivityUtils.startActivity(this, new Intent(this, SettingsActivity.class));
-        });
+        if (settingsButton != null) {
+            settingsButton.setOnClickListener(v -> ActivityUtils.startActivity(this, new Intent(this, SettingsActivity.class)));
+        }
+        ImageButton settingsButtonRight = findViewById(R.id.settings_button_right);
+        if (settingsButtonRight != null) {
+            settingsButtonRight.setOnClickListener(v -> ActivityUtils.startActivity(this, new Intent(this, SettingsActivity.class)));
+        }
     }
 
     private void setNewSessionButtonView() {
-        View newSessionButton = findViewById(R.id.new_session_button);
-        newSessionButton.setOnClickListener(v -> mTermuxTerminalSessionActivityClient.addNewSession(false, null));
-        newSessionButton.setOnLongClickListener(v -> {
+        View.OnClickListener onClick = v -> mTermuxTerminalSessionActivityClient.addNewSession(false, null);
+        View.OnLongClickListener onLongClick = v -> {
             TextInputDialogUtils.textInput(TermuxActivity.this, R.string.title_create_named_session, null,
                 R.string.action_create_named_session_confirm, text -> mTermuxTerminalSessionActivityClient.addNewSession(false, text),
                 R.string.action_new_session_failsafe, text -> mTermuxTerminalSessionActivityClient.addNewSession(true, text),
                 -1, null, null);
             return true;
-        });
+        };
+
+        View newSessionButton = findViewById(R.id.new_session_button);
+        if (newSessionButton != null) {
+            newSessionButton.setOnClickListener(onClick);
+            newSessionButton.setOnLongClickListener(onLongClick);
+        }
+
+        View newSessionButtonRight = findViewById(R.id.new_session_button_right);
+        if (newSessionButtonRight != null) {
+            newSessionButtonRight.setOnClickListener(onClick);
+            newSessionButtonRight.setOnLongClickListener(onLongClick);
+        }
     }
 
     private void setToggleKeyboardView() {
-        findViewById(R.id.toggle_keyboard_button).setOnClickListener(v -> {
+        View.OnClickListener onClick = v -> {
             mTermuxTerminalViewClient.onToggleSoftKeyboardRequest();
             getDrawer().closeDrawers();
-        });
-
-        findViewById(R.id.toggle_keyboard_button).setOnLongClickListener(v -> {
+        };
+        View.OnLongClickListener onLongClick = v -> {
             toggleTerminalToolbar();
             return true;
-        });
+        };
+
+        View toggleKeyboardButton = findViewById(R.id.toggle_keyboard_button);
+        if (toggleKeyboardButton != null) {
+            toggleKeyboardButton.setOnClickListener(onClick);
+            toggleKeyboardButton.setOnLongClickListener(onLongClick);
+        }
+
+        View toggleKeyboardButtonRight = findViewById(R.id.toggle_keyboard_button_right);
+        if (toggleKeyboardButtonRight != null) {
+            toggleKeyboardButtonRight.setOnClickListener(onClick);
+            toggleKeyboardButtonRight.setOnLongClickListener(onLongClick);
+        }
     }
 
 
 
 
+
+    @Override
+    public boolean dispatchTouchEvent(MotionEvent ev) {
+        DrawerLayout drawerLayout = getDrawer();
+        if (drawerLayout != null && ev.getAction() == MotionEvent.ACTION_DOWN) {
+            View leftDrawer = findViewById(R.id.left_drawer);
+            View rightDrawer = findViewById(R.id.right_drawer);
+
+            boolean isLeftOpen = drawerLayout.isDrawerOpen(Gravity.LEFT);
+            boolean isRightOpen = drawerLayout.isDrawerOpen(Gravity.RIGHT);
+
+            if (isLeftOpen && isTouchOutsideView(leftDrawer, ev)) {
+                drawerLayout.closeDrawer(Gravity.LEFT);
+                return true;
+            } else if (isRightOpen && isTouchOutsideView(rightDrawer, ev)) {
+                drawerLayout.closeDrawer(Gravity.RIGHT);
+                return true;
+            }
+        }
+        return super.dispatchTouchEvent(ev);
+    }
+
+    private boolean isTouchOutsideView(View view, MotionEvent ev) {
+        if (view == null || view.getVisibility() != View.VISIBLE) return true;
+        int[] location = new int[2];
+        view.getLocationOnScreen(location);
+        float x = ev.getRawX();
+        float y = ev.getRawY();
+        return x < location[0] || x > location[0] + view.getWidth() ||
+               y < location[1] || y > location[1] + view.getHeight();
+    }
 
     @SuppressLint("RtlHardcoded")
     @Override
     public void onBackPressed() {
-        if (getDrawer().isDrawerOpen(getDrawerGravity())) {
+        if (getDrawer().isDrawerOpen(Gravity.LEFT) || getDrawer().isDrawerOpen(Gravity.RIGHT)) {
             getDrawer().closeDrawers();
         } else {
             finishActivityIfNotFinishing();
@@ -892,19 +973,59 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
         return mProperties != null && mProperties.isSessionListOnRight() ? Gravity.RIGHT : Gravity.LEFT;
     }
 
-    public void setDrawerGravity() {
-        View drawer = findViewById(R.id.left_drawer);
-        if (drawer != null) {
-            DrawerLayout.LayoutParams lp = (DrawerLayout.LayoutParams) drawer.getLayoutParams();
-            int targetGravity = getDrawerGravity();
-            if (lp != null && lp.gravity != targetGravity) {
-                DrawerLayout drawerLayout = getDrawer();
-                if (drawerLayout != null) {
-                    drawerLayout.closeDrawers();
+    private void setDrawerLayout() {
+        DrawerLayout drawerLayout = getDrawer();
+        if (drawerLayout == null) return;
+
+        drawerLayout.addDrawerListener(new DrawerLayout.SimpleDrawerListener() {
+            @Override
+            public void onDrawerSlide(@NonNull View drawerView, float slideOffset) {
+                if (slideOffset > 0) {
+                    if (drawerView.getId() == R.id.left_drawer) {
+                        if (drawerLayout.isDrawerOpen(Gravity.RIGHT) || drawerLayout.isDrawerVisible(Gravity.RIGHT)) {
+                            drawerLayout.closeDrawer(Gravity.RIGHT);
+                        }
+                    } else if (drawerView.getId() == R.id.right_drawer) {
+                        if (drawerLayout.isDrawerOpen(Gravity.LEFT) || drawerLayout.isDrawerVisible(Gravity.LEFT)) {
+                            drawerLayout.closeDrawer(Gravity.LEFT);
+                        }
+                    }
                 }
-                lp.gravity = targetGravity;
-                drawer.setLayoutParams(lp);
             }
+
+            @Override
+            public void onDrawerOpened(@NonNull View drawerView) {
+                if (drawerView.getId() == R.id.left_drawer) {
+                    if (drawerLayout.isDrawerOpen(Gravity.RIGHT)) {
+                        drawerLayout.closeDrawer(Gravity.RIGHT);
+                    }
+                } else if (drawerView.getId() == R.id.right_drawer) {
+                    if (drawerLayout.isDrawerOpen(Gravity.LEFT)) {
+                        drawerLayout.closeDrawer(Gravity.LEFT);
+                    }
+                }
+            }
+        });
+    }
+
+    public void setDrawerSide() {
+        DrawerLayout drawerLayout = getDrawer();
+        if (drawerLayout == null) return;
+
+        View leftDrawer = findViewById(R.id.left_drawer);
+        View rightDrawer = findViewById(R.id.right_drawer);
+
+        boolean enableLeft = mProperties == null || !mProperties.isSessionListOnRight();
+        boolean enableRight = mProperties != null && (mProperties.isSessionListOnRight() || mProperties.isSessionListOnBoth());
+
+        if (leftDrawer != null) {
+            leftDrawer.setVisibility(enableLeft ? View.VISIBLE : View.GONE);
+            drawerLayout.setDrawerLockMode(enableLeft ? DrawerLayout.LOCK_MODE_UNLOCKED : DrawerLayout.LOCK_MODE_LOCKED_CLOSED, Gravity.LEFT);
+        }
+
+        if (rightDrawer != null) {
+            rightDrawer.setVisibility(enableRight ? View.VISIBLE : View.GONE);
+            drawerLayout.setDrawerLockMode(enableRight ? DrawerLayout.LOCK_MODE_UNLOCKED : DrawerLayout.LOCK_MODE_LOCKED_CLOSED, Gravity.RIGHT);
         }
     }
 
@@ -929,7 +1050,10 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
 
 
     public void termuxSessionListNotifyUpdated() {
-        mTermuxSessionListViewController.notifyDataSetChanged();
+        if (mTermuxSessionListViewController != null)
+            mTermuxSessionListViewController.notifyDataSetChanged();
+        if (mTermuxSessionListViewControllerRight != null)
+            mTermuxSessionListViewControllerRight.notifyDataSetChanged();
     }
 
     public boolean isVisible() {

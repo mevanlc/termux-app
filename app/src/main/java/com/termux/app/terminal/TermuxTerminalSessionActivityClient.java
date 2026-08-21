@@ -517,18 +517,29 @@ public class TermuxTerminalSessionActivityClient extends TermuxTerminalSessionCl
 
         final int indexOfSession = service.getIndexOfSession(session);
         if (indexOfSession < 0) return;
-        final ListView termuxSessionsListView = mActivity.findViewById(R.id.terminal_sessions_list);
-        if (termuxSessionsListView == null) return;
+        final ListView termuxSessionsListViewLeft = mActivity.findViewById(R.id.terminal_sessions_list);
+        final ListView termuxSessionsListViewRight = mActivity.findViewById(R.id.terminal_sessions_list_right);
 
         int listPosition = indexOfSession;
         if (mActivity.getProperties() != null && mActivity.getProperties().isSessionListBottomUp()) {
             listPosition = service.getTermuxSessionsSize() - 1 - indexOfSession;
         }
 
-        termuxSessionsListView.setItemChecked(listPosition, true);
+        if (termuxSessionsListViewLeft != null) {
+            termuxSessionsListViewLeft.setItemChecked(listPosition, true);
+        }
+        if (termuxSessionsListViewRight != null) {
+            termuxSessionsListViewRight.setItemChecked(listPosition, true);
+        }
+
         // Delay is necessary otherwise sometimes scroll to newly added session does not happen
         final int targetPosition = listPosition;
-        termuxSessionsListView.postDelayed(() -> termuxSessionsListView.smoothScrollToPosition(targetPosition), 1000);
+        if (termuxSessionsListViewLeft != null) {
+            termuxSessionsListViewLeft.postDelayed(() -> termuxSessionsListViewLeft.smoothScrollToPosition(targetPosition), 1000);
+        }
+        if (termuxSessionsListViewRight != null) {
+            termuxSessionsListViewRight.postDelayed(() -> termuxSessionsListViewRight.smoothScrollToPosition(targetPosition), 1000);
+        }
     }
 
 

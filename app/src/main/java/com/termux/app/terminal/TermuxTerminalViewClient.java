@@ -259,7 +259,11 @@ public class TermuxTerminalViewClient extends TermuxTerminalViewClientBase {
     @Override
     public void copyModeChanged(boolean copyMode) {
         // Disable drawer while copying.
-        mActivity.getDrawer().setDrawerLockMode(copyMode ? DrawerLayout.LOCK_MODE_LOCKED_CLOSED : DrawerLayout.LOCK_MODE_UNLOCKED);
+        if (copyMode) {
+            mActivity.getDrawer().setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED);
+        } else {
+            mActivity.setDrawerSide();
+        }
     }
 
 
@@ -282,13 +286,17 @@ public class TermuxTerminalViewClient extends TermuxTerminalViewClientBase {
             } else if (keyCode == KeyEvent.KEYCODE_DPAD_UP || unicodeChar == 'p' /* previous */) {
                 mTermuxTerminalSessionActivityClient.switchToSession(false);
             } else if (keyCode == KeyEvent.KEYCODE_DPAD_RIGHT) {
-                if (mActivity.getDrawerGravity() == Gravity.RIGHT) {
+                if (mActivity.getDrawer().isDrawerOpen(Gravity.RIGHT)) {
+                    mActivity.getDrawer().closeDrawer(Gravity.RIGHT);
+                } else if (mActivity.getDrawerGravity() == Gravity.RIGHT && !mActivity.getProperties().isSessionListOnBoth()) {
                     mActivity.getDrawer().closeDrawers();
                 } else {
                     mActivity.getDrawer().openDrawer(Gravity.LEFT);
                 }
             } else if (keyCode == KeyEvent.KEYCODE_DPAD_LEFT) {
-                if (mActivity.getDrawerGravity() == Gravity.RIGHT) {
+                if (mActivity.getDrawer().isDrawerOpen(Gravity.LEFT)) {
+                    mActivity.getDrawer().closeDrawer(Gravity.LEFT);
+                } else if (mActivity.getDrawerGravity() == Gravity.RIGHT || mActivity.getProperties().isSessionListOnBoth()) {
                     mActivity.getDrawer().openDrawer(Gravity.RIGHT);
                 } else {
                     mActivity.getDrawer().closeDrawers();

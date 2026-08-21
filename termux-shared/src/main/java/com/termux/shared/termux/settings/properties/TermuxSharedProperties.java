@@ -850,6 +850,14 @@ public abstract class TermuxSharedProperties {
         return TermuxPropertyConstants.IVALUE_SESSION_LIST_SIDE_RIGHT.equals(getSessionListSide());
     }
 
+    public boolean isSessionListOnLeft() {
+        return TermuxPropertyConstants.IVALUE_SESSION_LIST_SIDE_LEFT.equals(getSessionListSide());
+    }
+
+    public boolean isSessionListOnBoth() {
+        return TermuxPropertyConstants.IVALUE_SESSION_LIST_SIDE_BOTH.equals(getSessionListSide());
+    }
+
     public boolean shouldEnableDisableSoftKeyboardOnToggle() {
         return (boolean) TermuxPropertyConstants.IVALUE_SOFT_KEYBOARD_TOGGLE_BEHAVIOUR_ENABLE_DISABLE.equals(getInternalPropertyValue(TermuxPropertyConstants.KEY_SOFT_KEYBOARD_TOGGLE_BEHAVIOUR, true));
     }
