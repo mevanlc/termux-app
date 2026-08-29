@@ -265,6 +265,8 @@ public abstract class TermuxSharedProperties {
                 return (int) getDeleteTMPDIRFilesOlderThanXDaysOnExitInternalPropertyValueFromValue(value);
             case TermuxPropertyConstants.KEY_SESSION_ROW_HEIGHT:
                 return (int) getSessionRowHeightInternalPropertyValueFromValue(value);
+            case TermuxPropertyConstants.KEY_SESSION_CARD_FONT_SIZE:
+                return (int) getSessionCardFontSizeInternalPropertyValueFromValue(value);
             case TermuxPropertyConstants.KEY_TERMINAL_CURSOR_BLINK_RATE:
                 return (int) getTerminalCursorBlinkRateInternalPropertyValueFromValue(value);
             case TermuxPropertyConstants.KEY_TERMINAL_CURSOR_STYLE:
@@ -383,6 +385,24 @@ public abstract class TermuxSharedProperties {
             TermuxPropertyConstants.DEFAULT_IVALUE_SESSION_ROW_HEIGHT,
             TermuxPropertyConstants.IVALUE_SESSION_ROW_HEIGHT_MIN,
             TermuxPropertyConstants.IVALUE_SESSION_ROW_HEIGHT_MAX,
+            true, true, LOG_TAG);
+    }
+
+    /**
+     * Returns the int for the value if its not null and is between
+     * {@link TermuxPropertyConstants#IVALUE_SESSION_CARD_FONT_SIZE_MIN} and
+     * {@link TermuxPropertyConstants#IVALUE_SESSION_CARD_FONT_SIZE_MAX},
+     * otherwise returns {@link TermuxPropertyConstants#DEFAULT_IVALUE_SESSION_CARD_FONT_SIZE}.
+     *
+     * @param value The {@link String} value to convert.
+     * @return Returns the internal value for value.
+     */
+    public static int getSessionCardFontSizeInternalPropertyValueFromValue(String value) {
+        return SharedProperties.getDefaultIfNotInRange(TermuxPropertyConstants.KEY_SESSION_CARD_FONT_SIZE,
+            DataUtils.getIntFromString(value, TermuxPropertyConstants.DEFAULT_IVALUE_SESSION_CARD_FONT_SIZE),
+            TermuxPropertyConstants.DEFAULT_IVALUE_SESSION_CARD_FONT_SIZE,
+            TermuxPropertyConstants.IVALUE_SESSION_CARD_FONT_SIZE_MIN,
+            TermuxPropertyConstants.IVALUE_SESSION_CARD_FONT_SIZE_MAX,
             true, true, LOG_TAG);
     }
 
@@ -790,6 +810,10 @@ public abstract class TermuxSharedProperties {
 
     public int getSessionRowHeight() {
         return (int) getInternalPropertyValue(TermuxPropertyConstants.KEY_SESSION_ROW_HEIGHT, true);
+    }
+
+    public int getSessionCardFontSize() {
+        return (int) getInternalPropertyValue(TermuxPropertyConstants.KEY_SESSION_CARD_FONT_SIZE, true);
     }
 
     public int getTerminalCursorBlinkRate() {

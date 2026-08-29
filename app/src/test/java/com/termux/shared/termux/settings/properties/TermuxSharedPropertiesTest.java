@@ -51,6 +51,39 @@ public class TermuxSharedPropertiesTest {
     }
 
     @Test
+    public void testSessionCardFontSizeConstants() {
+        Assert.assertEquals("session-card-font-size", TermuxPropertyConstants.KEY_SESSION_CARD_FONT_SIZE);
+        Assert.assertEquals(1, TermuxPropertyConstants.IVALUE_SESSION_CARD_FONT_SIZE_MIN);
+        Assert.assertEquals(100, TermuxPropertyConstants.IVALUE_SESSION_CARD_FONT_SIZE_MAX);
+        Assert.assertEquals(14, TermuxPropertyConstants.DEFAULT_IVALUE_SESSION_CARD_FONT_SIZE);
+        Assert.assertTrue(TermuxPropertyConstants.TERMUX_APP_PROPERTIES_LIST.contains(TermuxPropertyConstants.KEY_SESSION_CARD_FONT_SIZE));
+    }
+
+    @Test
+    public void testSessionCardFontSizeParsing() {
+        Assert.assertEquals(14, TermuxSharedProperties.getSessionCardFontSizeInternalPropertyValueFromValue(null));
+        Assert.assertEquals(14, TermuxSharedProperties.getSessionCardFontSizeInternalPropertyValueFromValue(""));
+        Assert.assertEquals(1, TermuxSharedProperties.getSessionCardFontSizeInternalPropertyValueFromValue("1"));
+        Assert.assertEquals(10, TermuxSharedProperties.getSessionCardFontSizeInternalPropertyValueFromValue("10"));
+        Assert.assertEquals(14, TermuxSharedProperties.getSessionCardFontSizeInternalPropertyValueFromValue("14"));
+        Assert.assertEquals(18, TermuxSharedProperties.getSessionCardFontSizeInternalPropertyValueFromValue("18"));
+        Assert.assertEquals(100, TermuxSharedProperties.getSessionCardFontSizeInternalPropertyValueFromValue("100"));
+
+        // Out of range or invalid falls back to default 14
+        Assert.assertEquals(14, TermuxSharedProperties.getSessionCardFontSizeInternalPropertyValueFromValue("0"));
+        Assert.assertEquals(14, TermuxSharedProperties.getSessionCardFontSizeInternalPropertyValueFromValue("-1"));
+        Assert.assertEquals(14, TermuxSharedProperties.getSessionCardFontSizeInternalPropertyValueFromValue("101"));
+        Assert.assertEquals(14, TermuxSharedProperties.getSessionCardFontSizeInternalPropertyValueFromValue("invalid"));
+
+        Assert.assertEquals(16, TermuxSharedProperties.getInternalTermuxPropertyValueFromValue(
+            null, TermuxPropertyConstants.KEY_SESSION_CARD_FONT_SIZE, "16"
+        ));
+        Assert.assertEquals(14, TermuxSharedProperties.getInternalTermuxPropertyValueFromValue(
+            null, TermuxPropertyConstants.KEY_SESSION_CARD_FONT_SIZE, null
+        ));
+    }
+
+    @Test
     public void testSessionListBottomUpConstants() {
         Assert.assertEquals("session-list-bottom-up", TermuxPropertyConstants.KEY_SESSION_LIST_BOTTOM_UP);
         Assert.assertTrue(TermuxPropertyConstants.TERMUX_APP_PROPERTIES_LIST.contains(TermuxPropertyConstants.KEY_SESSION_LIST_BOTTOM_UP));

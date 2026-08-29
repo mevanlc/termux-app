@@ -18,7 +18,7 @@ import java.util.List;
 import java.util.Set;
 
 /*
- * Version: v0.25.0
+ * Version: v0.26.0
  * SPDX-License-Identifier: MIT
  *
  * Changelog
@@ -101,6 +101,9 @@ import java.util.Set;
  *
  * - 0.25.0 (2026-08-19)
  *      - Add `IVALUE_SESSION_LIST_SIDE_BOTH` to `KEY_SESSION_LIST_SIDE`.
+ *
+ * - 0.26.0 (2026-08-21)
+ *      - Add `KEY_SESSION_CARD_FONT_SIZE`.
  */
 
 /**
@@ -274,6 +277,12 @@ public final class TermuxPropertyConstants {
     public static final int IVALUE_SESSION_ROW_HEIGHT_MIN = 0;
     public static final int IVALUE_SESSION_ROW_HEIGHT_MAX = 500;
     public static final int DEFAULT_IVALUE_SESSION_ROW_HEIGHT = 0;
+
+    /** Defines the key for the drawer session list card font size in sp units */
+    public static final String KEY_SESSION_CARD_FONT_SIZE = "session-card-font-size"; // Default: "session-card-font-size"
+    public static final int IVALUE_SESSION_CARD_FONT_SIZE_MIN = 1;
+    public static final int IVALUE_SESSION_CARD_FONT_SIZE_MAX = 100;
+    public static final int DEFAULT_IVALUE_SESSION_CARD_FONT_SIZE = 14;
 
 
 
@@ -510,6 +519,7 @@ public final class TermuxPropertyConstants {
         KEY_BELL_BEHAVIOUR,
         KEY_DELETE_TMPDIR_FILES_OLDER_THAN_X_DAYS_ON_EXIT,
         KEY_SESSION_ROW_HEIGHT,
+        KEY_SESSION_CARD_FONT_SIZE,
         KEY_TERMINAL_CURSOR_BLINK_RATE,
         KEY_TERMINAL_CURSOR_STYLE,
         KEY_TERMINAL_MARGIN_HORIZONTAL,

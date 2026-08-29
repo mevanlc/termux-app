@@ -59,6 +59,14 @@ public class TermuxSessionsListViewController extends ArrayAdapter<TermuxSession
         return properties != null ? properties.getSessionRowHeight() : TermuxPropertyConstants.DEFAULT_IVALUE_SESSION_ROW_HEIGHT;
     }
 
+    private int getSessionCardFontSize() {
+        TermuxAppSharedProperties properties = mActivity != null ? mActivity.getProperties() : null;
+        if (properties == null) {
+            properties = TermuxAppSharedProperties.getProperties();
+        }
+        return properties != null ? properties.getSessionCardFontSize() : TermuxPropertyConstants.DEFAULT_IVALUE_SESSION_CARD_FONT_SIZE;
+    }
+
     private boolean isSessionListBottomUp() {
         TermuxAppSharedProperties properties = mActivity != null ? mActivity.getProperties() : null;
         if (properties == null) {
@@ -101,6 +109,7 @@ public class TermuxSessionsListViewController extends ArrayAdapter<TermuxSession
         if (sessionTitleView != null) {
             sessionTitleView.setMinHeight(targetHeightPx);
             sessionTitleView.setMinimumHeight(targetHeightPx);
+            sessionTitleView.setTextSize(TypedValue.COMPLEX_UNIT_SP, getSessionCardFontSize());
         }
 
         TerminalSession sessionAtRow = getItem(position).getTerminalSession();
