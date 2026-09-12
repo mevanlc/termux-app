@@ -179,7 +179,7 @@ public class TermuxTerminalViewClient extends TermuxTerminalViewClientBase {
     public float onScale(float scale) {
         if (scale < 0.9f || scale > 1.1f) {
             boolean increase = scale > 1.f;
-            changeFontSize(increase);
+            changeFontSize(increase, mActivity.getProperties().getPinchZoomFontSizeStep());
             return 1.0f;
         }
         return scale;
@@ -561,16 +561,20 @@ public class TermuxTerminalViewClient extends TermuxTerminalViewClientBase {
 
 
     public void changeFontSize(boolean increase) {
+        changeFontSize(increase, 2);
+    }
+
+    private void changeFontSize(boolean increase, int step) {
         int fontSize;
         if (mActivity.getPreferences().isZoomPerSessionEnabled()) {
             TermuxSession termuxSession = getCurrentTermuxSession();
             fontSize = mActivity.getPreferences().getChangedFontSize(
-                mTermuxTerminalSessionActivityClient.getFontSizeForTermuxSession(termuxSession), increase);
+                mTermuxTerminalSessionActivityClient.getFontSizeForTermuxSession(termuxSession), increase, step);
             if (termuxSession != null)
                 termuxSession.setFontSize(fontSize);
             mTermuxTerminalSessionActivityClient.storeFontSizeOfCurrentSession(fontSize);
         } else {
-            fontSize = mActivity.getPreferences().changeFontSize(increase);
+            fontSize = mActivity.getPreferences().changeFontSize(increase, step);
         }
 
         mActivity.getTerminalView().setTextSize(fontSize);

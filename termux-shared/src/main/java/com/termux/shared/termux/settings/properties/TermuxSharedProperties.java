@@ -279,6 +279,8 @@ public abstract class TermuxSharedProperties {
                 return (int) getTerminalTranscriptRowsInternalPropertyValueFromValue(value);
             case TermuxPropertyConstants.KEY_ZOOM_MINIMUM_DP:
                 return (int) getZoomMinimumDpInternalPropertyValueFromValue(value);
+            case TermuxPropertyConstants.KEY_PINCH_ZOOM_FONT_SIZE_STEP:
+                return getPinchZoomFontSizeStepInternalPropertyValueFromValue(value);
 
             /* float */
             case TermuxPropertyConstants.KEY_BRIGHTNESS:
@@ -505,6 +507,16 @@ public abstract class TermuxSharedProperties {
             TermuxPropertyConstants.DEFAULT_IVALUE_ZOOM_MINIMUM_DP,
             TermuxPropertyConstants.IVALUE_ZOOM_MINIMUM_DP_MIN,
             TermuxPropertyConstants.IVALUE_ZOOM_MINIMUM_DP_MAX,
+            true, true, LOG_TAG);
+    }
+
+    /** Returns the pinch-zoom step in pixels, or the default for invalid values. */
+    public static int getPinchZoomFontSizeStepInternalPropertyValueFromValue(String value) {
+        return SharedProperties.getDefaultIfNotInRange(TermuxPropertyConstants.KEY_PINCH_ZOOM_FONT_SIZE_STEP,
+            DataUtils.getIntFromString(value, TermuxPropertyConstants.DEFAULT_IVALUE_PINCH_ZOOM_FONT_SIZE_STEP),
+            TermuxPropertyConstants.DEFAULT_IVALUE_PINCH_ZOOM_FONT_SIZE_STEP,
+            TermuxPropertyConstants.IVALUE_PINCH_ZOOM_FONT_SIZE_STEP_MIN,
+            TermuxPropertyConstants.IVALUE_PINCH_ZOOM_FONT_SIZE_STEP_MAX,
             true, true, LOG_TAG);
     }
 
@@ -838,6 +850,10 @@ public abstract class TermuxSharedProperties {
 
     public int getZoomMinimumDp() {
         return (int) getInternalPropertyValue(TermuxPropertyConstants.KEY_ZOOM_MINIMUM_DP, true);
+    }
+
+    public int getPinchZoomFontSizeStep() {
+        return (int) getInternalPropertyValue(TermuxPropertyConstants.KEY_PINCH_ZOOM_FONT_SIZE_STEP, true);
     }
 
     public float getTerminalToolbarHeightScaleFactor() {

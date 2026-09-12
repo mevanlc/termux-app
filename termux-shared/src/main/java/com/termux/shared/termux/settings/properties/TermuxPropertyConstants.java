@@ -314,6 +314,12 @@ public final class TermuxPropertyConstants {
     public static final int IVALUE_ZOOM_MINIMUM_DP_MAX = 64;
     public static final int DEFAULT_IVALUE_ZOOM_MINIMUM_DP = 4;
 
+    /** Defines the terminal font size change per pinch-zoom step in pixels */
+    public static final String KEY_PINCH_ZOOM_FONT_SIZE_STEP = "pinch-zoom-font-size-step";
+    public static final int IVALUE_PINCH_ZOOM_FONT_SIZE_STEP_MIN = 1;
+    public static final int IVALUE_PINCH_ZOOM_FONT_SIZE_STEP_MAX = 256;
+    public static final int DEFAULT_IVALUE_PINCH_ZOOM_FONT_SIZE_STEP = 2;
+
 
 
 
@@ -526,6 +532,7 @@ public final class TermuxPropertyConstants {
         KEY_TERMINAL_MARGIN_VERTICAL,
         KEY_TERMINAL_TRANSCRIPT_ROWS,
         KEY_ZOOM_MINIMUM_DP,
+        KEY_PINCH_ZOOM_FONT_SIZE_STEP,
 
         /* float */
         KEY_BRIGHTNESS,

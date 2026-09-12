@@ -18,7 +18,8 @@ and adds:
   json file, double-tap modifier locking, swipe-up key cancellation, and a
   scroll-lock icon;
 - a swipe-navigable history for the toolbar text input;
-- per-session font zoom and a configurable minimum zoom size;
+- per-session font zoom, a configurable minimum zoom size, and a configurable
+  pinch-zoom step;
 - clipboard image paste, a "Paste with Newlines" action, and an "Open URL"
   text-selection action;
 - a terminal color brightness setting;
@@ -186,6 +187,22 @@ past the newest entry. Consecutive duplicates and blank entries are skipped.
 - **`zoom-minimum-dp`** (integer property, `1`–`64`, default `4`): the
   smallest font size, in dp, that zooming out can reach. Upstream hardcodes
   4 dp; raise it to prevent accidentally zooming text into illegibility.
+- **`pinch-zoom-font-size-step`** (integer property, `1`–`256`, default `2`):
+  the font-size change in pixels for each pinch-zoom step. Set it to `1` for
+  slower, finer zoom, or a larger value for faster, coarser zoom. One pixel is
+  the smallest step supported by the current integer font-size representation.
+  The pinch gesture threshold stays the same; `Ctrl+Alt` +/- still changes the
+  font size by 2 pixels. Works with global and per-session zoom and respects
+  the minimum and maximum font sizes. Invalid values fall back to `2`.
+  Applied live on `termux-reload-settings`.
+
+For finer pinch zoom, add this to `~/.termux/termux.properties` and run
+`termux-reload-settings`:
+
+```properties
+# make pinch zoom slower but finer, or faster but coarser
+pinch-zoom-font-size-step=1
+```
 
 ### clipboard, paste, and text selection
 

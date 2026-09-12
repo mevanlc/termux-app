@@ -148,7 +148,7 @@ public class TermuxAppSharedPreferences extends AppSharedPreferences {
 
         // http://www.google.com/design/spec/style/typography.html#typography-line-height
         int defaultFontSize = Math.round(12 * dipInPixels);
-        // Make it divisible by 2 since that is the minimal adjustment step:
+        // Keep the default divisible by 2 to match the keyboard zoom step:
         if (defaultFontSize % 2 == 1) defaultFontSize--;
 
         sizes[0] = defaultFontSize; // default
@@ -179,13 +179,13 @@ public class TermuxAppSharedPreferences extends AppSharedPreferences {
         return DataUtils.clamp(fontSize, MIN_FONTSIZE, MAX_FONTSIZE);
     }
 
-    public int getChangedFontSize(int fontSize, boolean increase) {
-        fontSize += (increase ? 1 : -1) * 2;
+    public int getChangedFontSize(int fontSize, boolean increase, int step) {
+        fontSize += (increase ? 1 : -1) * step;
         return clampFontSize(fontSize);
     }
 
-    public int changeFontSize(boolean increase) {
-        int fontSize = getChangedFontSize(getFontSize(), increase);
+    public int changeFontSize(boolean increase, int step) {
+        int fontSize = getChangedFontSize(getFontSize(), increase, step);
         setFontSize(fontSize);
         return fontSize;
     }
