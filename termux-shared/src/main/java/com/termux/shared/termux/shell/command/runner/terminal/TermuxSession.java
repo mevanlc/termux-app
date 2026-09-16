@@ -35,7 +35,8 @@ public class TermuxSession {
     private final ExecutionCommand mExecutionCommand;
     private final TermuxSessionClient mTermuxSessionClient;
     private final boolean mSetStdoutOnExit;
-    private Integer mFontSize;
+    /** Per-session font size in pixels; null uses the global size. */
+    private Float mFontSize;
 
     private static final String LOG_TAG = "TermuxSession";
 
@@ -278,11 +279,11 @@ public class TermuxSession {
     }
 
     @Nullable
-    public Integer getFontSize() {
+    public Float getFontSize() {
         return mFontSize;
     }
 
-    public void setFontSize(@Nullable Integer fontSize) {
+    public void setFontSize(@Nullable Float fontSize) {
         mFontSize = fontSize;
     }
 

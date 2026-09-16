@@ -8,6 +8,7 @@ import android.content.Context;
 import android.media.AudioManager;
 import android.os.Environment;
 import android.text.TextUtils;
+import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.InputDevice;
 import android.view.KeyEvent;
@@ -179,7 +180,10 @@ public class TermuxTerminalViewClient extends TermuxTerminalViewClientBase {
     public float onScale(float scale) {
         if (scale < 0.9f || scale > 1.1f) {
             boolean increase = scale > 1.f;
-            changeFontSize(increase, mActivity.getProperties().getPinchZoomFontSizeStep());
+            float stepPixels = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP,
+                mActivity.getProperties().getPinchZoomFontSizeStepDp(),
+                mActivity.getTerminalView().getResources().getDisplayMetrics());
+            changeFontSize(increase, stepPixels);
             return 1.0f;
         }
         return scale;
@@ -564,8 +568,8 @@ public class TermuxTerminalViewClient extends TermuxTerminalViewClientBase {
         changeFontSize(increase, 2);
     }
 
-    private void changeFontSize(boolean increase, int step) {
-        int fontSize;
+    private void changeFontSize(boolean increase, float step) {
+        float fontSize;
         if (mActivity.getPreferences().isZoomPerSessionEnabled()) {
             TermuxSession termuxSession = getCurrentTermuxSession();
             fontSize = mActivity.getPreferences().getChangedFontSize(

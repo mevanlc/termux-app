@@ -26,7 +26,7 @@ import java.util.HashMap;
  */
 public final class TerminalRenderer {
 
-    final int mTextSize;
+    final float mTextSize;
     final Typeface mTypeface;
     /** Variant typefaces for styled text. Equal to {@link #mTypeface} when no separate variant font is available. */
     final Typeface mBoldTypeface;
@@ -51,11 +51,11 @@ public final class TerminalRenderer {
     private boolean mBlockGlyphBatchActive;
     private int mBlockGlyphBatchColor;
 
-    public TerminalRenderer(int textSize, Typeface typeface, float brightness) {
+    public TerminalRenderer(float textSize, Typeface typeface, float brightness) {
         this(textSize, typeface, null, null, null, brightness);
     }
 
-    public TerminalRenderer(int textSize, Typeface typeface, Typeface boldTypeface, Typeface italicTypeface,
+    public TerminalRenderer(float textSize, Typeface typeface, Typeface boldTypeface, Typeface italicTypeface,
                             Typeface boldItalicTypeface, float brightness) {
         mTextSize = textSize;
         mTypeface = typeface;

@@ -166,26 +166,29 @@ public class TermuxAppSharedPreferences extends AppSharedPreferences {
         MAX_FONTSIZE = sizes[2];
     }
 
-    public int getFontSize() {
-        int fontSize = SharedPreferenceUtils.getIntStoredAsString(mSharedPreferences, TERMUX_APP.KEY_FONTSIZE, DEFAULT_FONTSIZE);
-        return DataUtils.clamp(fontSize, MIN_FONTSIZE, MAX_FONTSIZE);
+    /** Get the font size in pixels, including sizes saved as integer strings by older versions. */
+    public float getFontSize() {
+        String value = SharedPreferenceUtils.getString(mSharedPreferences, TERMUX_APP.KEY_FONTSIZE, null, false);
+        return clampFontSize(DataUtils.getFloatFromString(value, DEFAULT_FONTSIZE));
     }
 
-    public void setFontSize(int value) {
-        SharedPreferenceUtils.setIntStoredAsString(mSharedPreferences, TERMUX_APP.KEY_FONTSIZE, value, false);
+    public void setFontSize(float value) {
+        SharedPreferenceUtils.setString(mSharedPreferences, TERMUX_APP.KEY_FONTSIZE,
+            Float.toString(clampFontSize(value)), false);
     }
 
-    public int clampFontSize(int fontSize) {
-        return DataUtils.clamp(fontSize, MIN_FONTSIZE, MAX_FONTSIZE);
+    public float clampFontSize(float fontSize) {
+        if (Float.isNaN(fontSize) || Float.isInfinite(fontSize)) fontSize = DEFAULT_FONTSIZE;
+        return Math.max(MIN_FONTSIZE, Math.min(fontSize, MAX_FONTSIZE));
     }
 
-    public int getChangedFontSize(int fontSize, boolean increase, int step) {
+    public float getChangedFontSize(float fontSize, boolean increase, float step) {
         fontSize += (increase ? 1 : -1) * step;
         return clampFontSize(fontSize);
     }
 
-    public int changeFontSize(boolean increase, int step) {
-        int fontSize = getChangedFontSize(getFontSize(), increase, step);
+    public float changeFontSize(boolean increase, float step) {
+        float fontSize = getChangedFontSize(getFontSize(), increase, step);
         setFontSize(fontSize);
         return fontSize;
     }

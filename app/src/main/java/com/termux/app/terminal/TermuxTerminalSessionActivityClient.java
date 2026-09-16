@@ -301,7 +301,7 @@ public class TermuxTerminalSessionActivityClient extends TermuxTerminalSessionCl
     public void setCurrentSession(TerminalSession session) {
         if (session == null) return;
 
-        int fontSize = getFontSizeForSession(session);
+        float fontSize = getFontSizeForSession(session);
         if (mActivity.getTerminalView().attachSession(session, fontSize)) {
             // notify about switched session if not already displaying the session
             notifyOfSessionChange();
@@ -353,7 +353,7 @@ public class TermuxTerminalSessionActivityClient extends TermuxTerminalSessionCl
             setCurrentSession(termuxSession.getTerminalSession());
     }
 
-    public int getFontSizeForSession(TerminalSession session) {
+    public float getFontSizeForSession(TerminalSession session) {
         if (!mActivity.getPreferences().isZoomPerSessionEnabled())
             return mActivity.getPreferences().getFontSize();
 
@@ -362,8 +362,8 @@ public class TermuxTerminalSessionActivityClient extends TermuxTerminalSessionCl
         return getFontSizeForTermuxSession(termuxSession);
     }
 
-    public int getFontSizeForTermuxSession(TermuxSession termuxSession) {
-        Integer fontSize = termuxSession == null ? null : termuxSession.getFontSize();
+    public float getFontSizeForTermuxSession(TermuxSession termuxSession) {
+        Float fontSize = termuxSession == null ? null : termuxSession.getFontSize();
         return fontSize == null ? mActivity.getPreferences().getFontSize() : mActivity.getPreferences().clampFontSize(fontSize);
     }
 
@@ -374,10 +374,10 @@ public class TermuxTerminalSessionActivityClient extends TermuxTerminalSessionCl
      * start at whatever font size was last stored while zoom per session was disabled. Storing the
      * font size of the current session means a new session starts at the zoom of the session that
      * was displayed last. Nothing to do if zoom per session is disabled, since
-     * {@link com.termux.shared.termux.settings.preferences.TermuxAppSharedPreferences#changeFontSize(boolean)}
+     * {@link com.termux.shared.termux.settings.preferences.TermuxAppSharedPreferences#changeFontSize(boolean, float)}
      * already stores the font size in that case.
      */
-    public void storeFontSizeOfCurrentSession(int fontSize) {
+    public void storeFontSizeOfCurrentSession(float fontSize) {
         if (!mActivity.getPreferences().isZoomPerSessionEnabled()) return;
 
         if (mActivity.getPreferences().getFontSize() != fontSize)
@@ -388,7 +388,7 @@ public class TermuxTerminalSessionActivityClient extends TermuxTerminalSessionCl
         TerminalSession session = mActivity.getCurrentSession();
         if (session == null) return;
 
-        int fontSize = getFontSizeForSession(session);
+        float fontSize = getFontSizeForSession(session);
         if (mActivity.getTerminalView().getTextSize() != fontSize)
             mActivity.getTerminalView().setTextSize(fontSize);
     }
@@ -423,7 +423,7 @@ public class TermuxTerminalSessionActivityClient extends TermuxTerminalSessionCl
                 .setPositiveButton(android.R.string.ok, null).show();
         } else {
             TerminalSession currentSession = mActivity.getCurrentSession();
-            int fontSize = getFontSizeForSession(currentSession);
+            float fontSize = getFontSizeForSession(currentSession);
 
             String workingDirectory;
             if (currentSession == null) {

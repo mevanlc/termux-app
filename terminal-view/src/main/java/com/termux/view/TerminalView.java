@@ -301,9 +301,9 @@ public final class TerminalView extends View {
      * Attach a {@link TerminalSession} to this view using the provided text size for the first resize.
      *
      * @param session The {@link TerminalSession} this view will be displaying.
-     * @param textSize the font size, in density-independent pixels.
+     * @param textSize the font size, in pixels.
      */
-    public boolean attachSession(TerminalSession session, int textSize) {
+    public boolean attachSession(TerminalSession session, float textSize) {
         if (session == mTermSession) return false;
         mTopRow = 0;
 
@@ -527,18 +527,20 @@ public final class TerminalView extends View {
     /**
      * Sets the text size, which in turn sets the number of rows and columns.
      *
-     * @param textSize the new font size, in density-independent pixels.
+     * @param textSize the new font size, in pixels.
      */
-    public void setTextSize(int textSize) {
+    public void setTextSize(float textSize) {
         setTextSizeWithoutUpdatingTerminal(textSize);
         updateSize();
+        // Fractional size changes can leave the terminal's row and column counts unchanged.
+        invalidate();
     }
 
-    public int getTextSize() {
+    public float getTextSize() {
         return mRenderer == null ? 0 : mRenderer.mTextSize;
     }
 
-    private void setTextSizeWithoutUpdatingTerminal(int textSize) {
+    private void setTextSizeWithoutUpdatingTerminal(float textSize) {
         if (mRenderer == null) {
             mRenderer = new TerminalRenderer(textSize, Typeface.MONOSPACE, mBrightness);
         } else if (mRenderer.mTextSize != textSize) {
@@ -1046,9 +1048,11 @@ public final class TerminalView extends View {
         // Set to 80 and 24 if you want to enable vttest.
         int newColumns = Math.max(4, (int) (viewWidth / mRenderer.mFontWidth));
         int newRows = Math.max(4, (viewHeight - mRenderer.mFontLineSpacingAndAscent) / mRenderer.mFontLineSpacing);
+        int cellWidthPixels = Math.max(1, (int) mRenderer.getFontWidth());
+        int cellHeightPixels = mRenderer.getFontLineSpacing();
 
         if (mEmulator == null || (newColumns != mEmulator.mColumns || newRows != mEmulator.mRows)) {
-            mTermSession.updateSize(newColumns, newRows, (int) mRenderer.getFontWidth(), mRenderer.getFontLineSpacing());
+            mTermSession.updateSize(newColumns, newRows, cellWidthPixels, cellHeightPixels);
             mEmulator = mTermSession.getEmulator();
             mClient.onEmulatorSet();
 
@@ -1059,6 +1063,10 @@ public final class TerminalView extends View {
             mTopRow = 0;
             scrollTo(0, 0);
             invalidate();
+        } else if (cellWidthPixels != mEmulator.getCellWidthPixels() ||
+                   cellHeightPixels != mEmulator.getCellHeightPixels()) {
+            // Keep pixel-size reports and inline image sizing current without resetting scrollback.
+            mTermSession.updateSize(newColumns, newRows, cellWidthPixels, cellHeightPixels);
         }
     }
 

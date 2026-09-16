@@ -9,6 +9,19 @@ import org.robolectric.RobolectricTestRunner;
 public class TermuxSharedPropertiesTest {
 
     @Test
+    public void testFractionalPinchZoomStepParsing() {
+        for (String value : new String[] {"0.01", "0.25", "0.5", "2", "256"}) {
+            Assert.assertEquals(Float.parseFloat(value), (float) TermuxSharedProperties.getInternalTermuxPropertyValueFromValue(
+                null, TermuxPropertyConstants.KEY_PINCH_ZOOM_FONT_SIZE_STEP, value), 0f);
+        }
+        for (String value : new String[] {null, "", "invalid", "0", "-1", "0.001", "257", "NaN", "Infinity", "-Infinity", "1e100"}) {
+            Assert.assertEquals(TermuxPropertyConstants.DEFAULT_IVALUE_PINCH_ZOOM_FONT_SIZE_STEP,
+                (float) TermuxSharedProperties.getInternalTermuxPropertyValueFromValue(
+                    null, TermuxPropertyConstants.KEY_PINCH_ZOOM_FONT_SIZE_STEP, value), 0f);
+        }
+    }
+
+    @Test
     public void testSessionRowHeightConstants() {
         Assert.assertEquals("session-row-height", TermuxPropertyConstants.KEY_SESSION_ROW_HEIGHT);
         Assert.assertEquals(0, TermuxPropertyConstants.IVALUE_SESSION_ROW_HEIGHT_MIN);
