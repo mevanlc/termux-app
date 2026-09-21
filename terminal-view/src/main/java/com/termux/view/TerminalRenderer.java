@@ -10,14 +10,13 @@ import android.graphics.Rect;
 import android.graphics.RectF;
 import android.graphics.Typeface;
 import android.os.Build;
+import android.util.LruCache;
 
 import com.termux.terminal.TerminalBuffer;
 import com.termux.terminal.TerminalEmulator;
 import com.termux.terminal.TerminalRow;
 import com.termux.terminal.TextStyle;
 import com.termux.terminal.WcWidth;
-
-import java.util.HashMap;
 
 /**
  * Renderer of a {@link TerminalEmulator} into a {@link Canvas}.
@@ -35,6 +34,7 @@ public final class TerminalRenderer {
     final float mBrightness;
     private final Paint mTextPaint = new Paint();
     private final Paint mBitmapPaint = new Paint();
+    private final Paint mGlyphPaint = new Paint();
 
     /** The width of a single mono spaced character obtained by {@link Paint#measureText(String)} on a single 'X'. */
     final float mFontWidth;
@@ -46,7 +46,7 @@ public final class TerminalRenderer {
     final int mFontLineSpacingAndAscent;
 
     private final float[] asciiMeasures = new float[127];
-    private final HashMap<Integer, BlockGlyphGeometry> mBlockGlyphGeometryCache = new HashMap<>();
+    private final LruCache<Long, TerminalGlyphs.Geometry> mGlyphGeometryCache = new LruCache<>(512);
     private final Path mBlockGlyphBatchPath = new Path();
     private boolean mBlockGlyphBatchActive;
     private int mBlockGlyphBatchColor;
@@ -158,8 +158,7 @@ public final class TerminalRenderer {
                 final int codePointWcWidth = WcWidth.width(codePoint);
                 final boolean insideCursor = (cursorX == column || (codePointWcWidth == 2 && cursorX == column + 1));
                 final boolean insideSelection = column >= selx1 && column <= selx2;
-                final int blockGlyphSpec = BlockGlyphs.getSpec(codePoint);
-                if (blockGlyphSpec != BlockGlyphs.UNSUPPORTED) {
+                if (TerminalGlyphs.isSupported(codePoint)) {
                     if (lastRunStartColumn >= 0 && column > lastRunStartColumn) {
                         final int columnWidthSinceLastRun = column - lastRunStartColumn;
                         final int charsSinceLastRun = currentCharIndex - lastRunStartIndex;
@@ -178,7 +177,7 @@ public final class TerminalRenderer {
                     if (insideCursor && cursorShape == TerminalEmulator.TERMINAL_CURSOR_STYLE_BLOCK) {
                         invertCursorTextColor = true;
                     }
-                    drawBlockGlyph(canvas, blockGlyphSpec, palette, heightOffset, column, codePointWcWidth,
+                    drawBlockGlyph(canvas, codePoint, palette, heightOffset, column, codePointWcWidth,
                         cursorColor, cursorShape, style, reverseVideo || invertCursorTextColor || insideSelection);
 
                     column += codePointWcWidth;
@@ -285,7 +284,22 @@ public final class TerminalRenderer {
         }
 
         float left = startColumn * mFontWidth;
-        float right = left + runWidthColumns * mFontWidth;
+        int cellLeft = Math.round(left);
+        int cellRight = Math.round((startColumn + runWidthColumns) * mFontWidth);
+        if (backColor != palette[TextStyle.COLOR_INDEX_BACKGROUND]) {
+            // Cell backgrounds use the same shared pixel boundaries as geometric glyphs.
+            mGlyphPaint.setColor(applyBrightness(backColor, palette[TextStyle.COLOR_INDEX_BACKGROUND]));
+            canvas.drawRect(cellLeft, y - mFontLineSpacing, cellRight, y, mGlyphPaint);
+        }
+
+        if (cursor != 0) {
+            mGlyphPaint.setColor(applyBrightness(cursor, palette[TextStyle.COLOR_INDEX_BACKGROUND]));
+            float cursorHeight = mFontLineSpacing;
+            float cursorRight = cellRight;
+            if (cursorStyle == TerminalEmulator.TERMINAL_CURSOR_STYLE_UNDERLINE) cursorHeight /= 4.f;
+            else if (cursorStyle == TerminalEmulator.TERMINAL_CURSOR_STYLE_BAR) cursorRight = cellLeft + (cellRight - cellLeft) / 4.f;
+            canvas.drawRect(cellLeft, y - cursorHeight, cursorRight, y, mGlyphPaint);
+        }
 
         mes = mes / mFontWidth;
         boolean savedMatrix = false;
@@ -293,22 +307,7 @@ public final class TerminalRenderer {
             canvas.save();
             canvas.scale(runWidthColumns / mes, 1.f);
             left *= mes / runWidthColumns;
-            right *= mes / runWidthColumns;
             savedMatrix = true;
-        }
-
-        if (backColor != palette[TextStyle.COLOR_INDEX_BACKGROUND]) {
-            // Only draw non-default background.
-            mTextPaint.setColor(applyBrightness(backColor, palette[TextStyle.COLOR_INDEX_BACKGROUND]));
-            canvas.drawRect(left, y - mFontLineSpacingAndAscent + mFontAscent, right, y, mTextPaint);
-        }
-
-        if (cursor != 0) {
-            mTextPaint.setColor(applyBrightness(cursor, palette[TextStyle.COLOR_INDEX_BACKGROUND]));
-            float cursorHeight = mFontLineSpacingAndAscent - mFontAscent;
-            if (cursorStyle == TerminalEmulator.TERMINAL_CURSOR_STYLE_UNDERLINE) cursorHeight /= 4.f;
-            else if (cursorStyle == TerminalEmulator.TERMINAL_CURSOR_STYLE_BAR) right -= (((right - left) * 3) / 4.f);
-            canvas.drawRect(left, y - cursorHeight, right, y, mTextPaint);
         }
 
         if ((effect & TextStyle.CHARACTER_ATTRIBUTE_INVISIBLE) == 0) {
@@ -359,7 +358,7 @@ public final class TerminalRenderer {
         if (savedMatrix) canvas.restore();
     }
 
-    private void drawBlockGlyph(Canvas canvas, int blockGlyphSpec, int[] palette, float y, int startColumn, int runWidthColumns,
+    private void drawBlockGlyph(Canvas canvas, int codePoint, int[] palette, float y, int startColumn, int runWidthColumns,
                                 int cursor, int cursorStyle, long textStyle, boolean reverseVideo) {
         int foreColor = TextStyle.decodeForeColor(textStyle);
         final int effect = TextStyle.decodeEffect(textStyle);
@@ -385,55 +384,63 @@ public final class TerminalRenderer {
             backColor = tmp;
         }
 
-        float left = startColumn * mFontWidth;
-        float right = left + runWidthColumns * mFontWidth;
-        float glyphRight = right;
-        float top = y - mFontLineSpacing;
-        float bottom = y;
+        // Both neighbors calculate the same boundary; rounding an origin plus a width separately
+        // would leave seams at fractional zoom levels.
+        int left = Math.round(startColumn * mFontWidth);
+        int right = Math.round((startColumn + runWidthColumns) * mFontWidth);
+        int top = Math.round(y) - mFontLineSpacing;
+        int bottom = Math.round(y);
+        if (right <= left) return;
 
         if (backColor != palette[TextStyle.COLOR_INDEX_BACKGROUND]) {
-            mTextPaint.setColor(applyBrightness(backColor, palette[TextStyle.COLOR_INDEX_BACKGROUND]));
-            canvas.drawRect(left, top, right, bottom, mTextPaint);
+            flushBlockGlyphBatch(canvas);
+            mGlyphPaint.setColor(applyBrightness(backColor, palette[TextStyle.COLOR_INDEX_BACKGROUND]));
+            canvas.drawRect(left, top, right, bottom, mGlyphPaint);
         }
 
         if (cursor != 0) {
-            mTextPaint.setColor(applyBrightness(cursor, palette[TextStyle.COLOR_INDEX_BACKGROUND]));
-            float cursorHeight = mFontLineSpacingAndAscent - mFontAscent;
+            flushBlockGlyphBatch(canvas);
+            mGlyphPaint.setColor(applyBrightness(cursor, palette[TextStyle.COLOR_INDEX_BACKGROUND]));
+            float cursorHeight = mFontLineSpacing;
             float cursorRight = right;
             if (cursorStyle == TerminalEmulator.TERMINAL_CURSOR_STYLE_UNDERLINE) cursorHeight /= 4.f;
-            else if (cursorStyle == TerminalEmulator.TERMINAL_CURSOR_STYLE_BAR) cursorRight -= (((cursorRight - left) * 3) / 4.f);
-            canvas.drawRect(left, y - cursorHeight, cursorRight, y, mTextPaint);
+            else if (cursorStyle == TerminalEmulator.TERMINAL_CURSOR_STYLE_BAR) cursorRight = left + (right - left) / 4.f;
+            canvas.drawRect(left, y - cursorHeight, cursorRight, y, mGlyphPaint);
         }
 
         if ((effect & TextStyle.CHARACTER_ATTRIBUTE_INVISIBLE) == 0) {
             if (dim) {
-                int red = (0xFF & (foreColor >> 16));
-                int green = (0xFF & (foreColor >> 8));
-                int blue = (0xFF & foreColor);
-                red = red * 2 / 3;
-                green = green * 2 / 3;
-                blue = blue * 2 / 3;
-                foreColor = 0xFF000000 + (red << 16) + (green << 8) + blue;
+                int red = (0xFF & (foreColor >> 16)) * 2 / 3;
+                int green = (0xFF & (foreColor >> 8)) * 2 / 3;
+                int blue = (0xFF & foreColor) * 2 / 3;
+                foreColor = 0xFF000000 | (red << 16) | (green << 8) | blue;
             }
-
-            if (cursor != 0 || underline || strikeThrough) {
+            int color = applyBrightness(foreColor, palette[TextStyle.COLOR_INDEX_BACKGROUND]);
+            TerminalGlyphs.Geometry geometry = getGlyphGeometry(codePoint, right - left, bottom - top);
+            if (cursor != 0 || underline || strikeThrough || !geometry.smooth.isEmpty()) {
                 flushBlockGlyphBatch(canvas);
-                mTextPaint.setColor(applyBrightness(foreColor, palette[TextStyle.COLOR_INDEX_BACKGROUND]));
-                drawBlockGlyphCells(canvas, blockGlyphSpec, left, top, runWidthColumns);
-
-                if (underline || strikeThrough) {
-                    float lineHeight = Math.max(1.f, mTextSize / 12.f);
-                    if (underline) {
-                        float underlineTop = Math.max(top, y - lineHeight);
-                        canvas.drawRect(left, underlineTop, glyphRight, y, mTextPaint);
-                    }
-                    if (strikeThrough) {
-                        float center = top + ((bottom - top) / 2.f);
-                        canvas.drawRect(left, center - lineHeight / 2.f, glyphRight, center + lineHeight / 2.f, mTextPaint);
-                    }
+                mGlyphPaint.setColor(color);
+                canvas.save();
+                canvas.translate(left, top);
+                canvas.drawPath(geometry.pixels, mGlyphPaint);
+                mGlyphPaint.setAntiAlias(true);
+                canvas.drawPath(geometry.smooth, mGlyphPaint);
+                mGlyphPaint.setAntiAlias(false);
+                canvas.restore();
+                float lineHeight = Math.max(1.f, mTextSize / 12.f);
+                if (underline) canvas.drawRect(left, Math.max(top, y - lineHeight), right, y, mGlyphPaint);
+                if (strikeThrough) {
+                    float center = top + (bottom - top) / 2.f;
+                    canvas.drawRect(left, center - lineHeight / 2.f, right, center + lineHeight / 2.f, mGlyphPaint);
                 }
             } else {
-                appendBlockGlyphCellsToBatch(canvas, blockGlyphSpec, applyBrightness(foreColor, palette[TextStyle.COLOR_INDEX_BACKGROUND]), left, top, runWidthColumns);
+                if (mBlockGlyphBatchActive && mBlockGlyphBatchColor != color) flushBlockGlyphBatch(canvas);
+                if (!mBlockGlyphBatchActive) {
+                    mBlockGlyphBatchPath.reset();
+                    mBlockGlyphBatchColor = color;
+                    mBlockGlyphBatchActive = true;
+                }
+                mBlockGlyphBatchPath.addPath(geometry.pixels, left, top);
             }
         }
     }
@@ -448,98 +455,22 @@ public final class TerminalRenderer {
         return (color & 0xFF000000) | (red << 16) | (green << 8) | blue;
     }
 
-    private void drawBlockGlyphCells(Canvas canvas, int blockGlyphSpec, float left, float top, int runWidthColumns) {
-        BlockGlyphGeometry geometry = getBlockGlyphGeometry(blockGlyphSpec, runWidthColumns);
-        float[] rects = geometry.rects;
-        for (int i = 0; i < rects.length; i += 4)
-            canvas.drawRect(left + rects[i], top + rects[i + 1], left + rects[i + 2], top + rects[i + 3], mTextPaint);
-    }
-
-    private void appendBlockGlyphCellsToBatch(Canvas canvas, int blockGlyphSpec, int color, float left, float top, int runWidthColumns) {
-        if (mBlockGlyphBatchActive && mBlockGlyphBatchColor != color)
-            flushBlockGlyphBatch(canvas);
-
-        if (!mBlockGlyphBatchActive) {
-            mBlockGlyphBatchPath.reset();
-            mBlockGlyphBatchColor = color;
-            mBlockGlyphBatchActive = true;
-        }
-
-        BlockGlyphGeometry geometry = getBlockGlyphGeometry(blockGlyphSpec, runWidthColumns);
-        float[] rects = geometry.rects;
-        for (int i = 0; i < rects.length; i += 4) {
-            mBlockGlyphBatchPath.addRect(left + rects[i], top + rects[i + 1],
-                left + rects[i + 2], top + rects[i + 3], Path.Direction.CW);
-        }
-    }
-
     private void flushBlockGlyphBatch(Canvas canvas) {
-        if (!mBlockGlyphBatchActive)
-            return;
-
-        mTextPaint.setColor(mBlockGlyphBatchColor);
-        canvas.drawPath(mBlockGlyphBatchPath, mTextPaint);
+        if (!mBlockGlyphBatchActive) return;
+        mGlyphPaint.setColor(mBlockGlyphBatchColor);
+        canvas.drawPath(mBlockGlyphBatchPath, mGlyphPaint);
         mBlockGlyphBatchPath.reset();
         mBlockGlyphBatchActive = false;
     }
 
-    private BlockGlyphGeometry getBlockGlyphGeometry(int blockGlyphSpec, int runWidthColumns) {
-        int key = blockGlyphSpec | (runWidthColumns << 28);
-        BlockGlyphGeometry geometry = mBlockGlyphGeometryCache.get(key);
-        if (geometry != null)
-            return geometry;
-
-        final int mask = BlockGlyphs.getMask(blockGlyphSpec);
-        final int columns = BlockGlyphs.getColumns(blockGlyphSpec);
-        final int rows = BlockGlyphs.getRows(blockGlyphSpec);
-        final boolean separated = BlockGlyphs.isSeparated(blockGlyphSpec);
-        final float width = runWidthColumns * mFontWidth;
-        final float height = mFontLineSpacing;
-        final float gapX = separated ? Math.max(1.f, width / 8.f) : 0.f;
-        final float gapY = separated ? Math.max(1.f, height / 8.f) : 0.f;
-        final float cellWidth = separated ? Math.max(0.f, (width - (columns + 1) * gapX) / columns) : width / columns;
-        final float cellHeight = separated ? Math.max(0.f, (height - (rows + 1) * gapY) / rows) : height / rows;
-        final float[] rects = new float[Integer.bitCount(mask) * 4];
-        int rectOffset = 0;
-
-        for (int row = 0; row < rows; row++) {
-            for (int column = 0; column < columns; column++) {
-                if ((mask & (1 << (row * columns + column))) == 0)
-                    continue;
-
-                float cellLeft;
-                float cellTop;
-                float cellRight;
-                float cellBottom;
-                if (separated) {
-                    cellLeft = gapX + column * (cellWidth + gapX);
-                    cellTop = gapY + row * (cellHeight + gapY);
-                    cellRight = cellLeft + cellWidth;
-                    cellBottom = cellTop + cellHeight;
-                } else {
-                    cellLeft = column * cellWidth;
-                    cellTop = row * cellHeight;
-                    cellRight = column == columns - 1 ? width : (column + 1) * cellWidth;
-                    cellBottom = row == rows - 1 ? height : (row + 1) * cellHeight;
-                }
-                rects[rectOffset++] = cellLeft;
-                rects[rectOffset++] = cellTop;
-                rects[rectOffset++] = cellRight;
-                rects[rectOffset++] = cellBottom;
-            }
+    private TerminalGlyphs.Geometry getGlyphGeometry(int codePoint, int width, int height) {
+        long key = ((long) codePoint << 42) | ((long) width << 21) | height;
+        TerminalGlyphs.Geometry geometry = mGlyphGeometryCache.get(key);
+        if (geometry == null) {
+            geometry = TerminalGlyphs.create(codePoint, width, height);
+            mGlyphGeometryCache.put(key, geometry);
         }
-
-        geometry = new BlockGlyphGeometry(rects);
-        mBlockGlyphGeometryCache.put(key, geometry);
         return geometry;
-    }
-
-    private static final class BlockGlyphGeometry {
-        final float[] rects;
-
-        BlockGlyphGeometry(float[] rects) {
-            this.rects = rects;
-        }
     }
 
     public float getFontWidth() {

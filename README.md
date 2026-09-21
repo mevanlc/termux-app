@@ -12,7 +12,8 @@ and adds:
 
 - terminal graphics: Sixel and iTerm2 inline image rendering;
 - synchronized output (DECSET 2026) for complete TUI frame updates;
-- built-in rendering of Unicode octant, sextant, and block glyphs;
+- built-in rendering of box drawing, block/mosaic, Braille, Powerline, and other
+  terminal graphics glyphs;
 - real bold/italic terminal font variants via `font-bold.ttf`,
   `font-italic.ttf`, and `font-bold-italic.ttf`;
 - extra-keys toolbar improvements: any number of named key panels loaded from a
@@ -62,17 +63,25 @@ data (150 MB on Android 15+, or the device's reported texture allocation
 limit). There is no option to disable graphics support. The kitty graphics
 protocol is not implemented.
 
-### block glyph rendering
+### geometric glyph rendering
 
-The renderer draws Unicode "legacy computing" mosaic glyphs geometrically
-instead of relying on the font, so TUI tools that use them (e.g. `chafa`,
-notcurses-based programs, terminal plotters) work even though almost no
-Android monospace font covers them, and adjacent glyphs join without hairline
-gaps. Covered ranges include block octants (U+1CD00–U+1CDE5, U+1FBE6/U+1FBE7),
-sextants and separated sextants, one-eighth blocks, upper/right fractional
-blocks, and quarter-block partials. Standard box-drawing (U+2500–U+257F) and
-block elements (U+2580–U+259F) still come from the font. Consecutive
-same-color glyphs are batched into single draw calls. This is always on.
+The renderer draws 1,098 terminal graphics characters geometrically instead of
+relying on the font. Coverage matches Kitty's built-in glyph repertoire at
+commit `31c16b37b`: standard box drawing and block elements, Braille, selected
+circles and triangles, Powerline separators, Fira Code progress bars/spinners,
+branch/commit symbols, and legacy computing mosaics (including octants,
+sextants, sixteenths, fractional blocks, shading, and separated blocks).
+
+Solid blocks and cell backgrounds share integer pixel boundaries, including
+at fractional font sizes, so adjacent cells do not acquire antialiased seams.
+Curves and diagonals retain antialiasing; separated blocks retain their
+intentional gaps. Geometry is cached in a bounded cache, and consecutive
+same-color rectangular glyphs are batched. Normal terminal colors, brightness,
+selection, cursor, dim, underline, and strike-through still apply. Bold and
+italic do not distort the geometric shapes. This is always on.
+
+See [the character inventory](docs/geometric-glyphs.md) for exact ranges and
+[the attribution notice](terminal-view/NOTICE.md) for the Kitty-derived mappings.
 
 ### font variants
 
@@ -304,8 +313,9 @@ APKs are written to `app/build/outputs/apk/debug/`.
 
 ## license
 
-Unchanged from upstream: the repository is released under
-[GPLv3 only](LICENSE.md), with the `terminal-emulator` and `terminal-view`
-components under Apache 2.0 (inherited from Terminal Emulator for Android)
-and additional exceptions listed in
+The repository is released under [GPLv3 only](LICENSE.md). The inherited
+Terminal Emulator for Android code in `terminal-emulator` and `terminal-view`
+is Apache 2.0; the added Kitty-derived glyph renderer and mappings are
+GPLv3 only, as detailed in [`terminal-view/NOTICE.md`](terminal-view/NOTICE.md).
+Additional exceptions are listed in
 [`termux-shared/LICENSE.md`](termux-shared/LICENSE.md).

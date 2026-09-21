@@ -172,6 +172,39 @@ final class BlockGlyphs {
     }
 
     static int getSpec(int codePoint) {
+        // Standard block elements use the same cell geometry as the newer mosaics.
+        if (codePoint == 0x2580) return pack(1, 2, 1, false);
+        if (codePoint >= 0x2581 && codePoint <= 0x2587) {
+            int eighths = codePoint - 0x2580;
+            return pack(1, 8, ((1 << eighths) - 1) << (8 - eighths), false);
+        }
+        if (codePoint == 0x2588) return pack(1, 1, 1, false);
+        if (codePoint >= 0x2589 && codePoint <= 0x258F)
+            return pack(8, 1, (1 << (0x2590 - codePoint)) - 1, false);
+        switch (codePoint) {
+            case 0x2590: return pack(2, 1, 2, false);
+            case 0x2594: return pack(1, 8, 1, false);
+            case 0x2595: return pack(8, 1, 128, false);
+            case 0x2596: return pack(2, 2, 4, false);
+            case 0x2597: return pack(2, 2, 8, false);
+            case 0x2598: return pack(2, 2, 1, false);
+            case 0x2599: return pack(2, 2, 13, false);
+            case 0x259A: return pack(2, 2, 9, false);
+            case 0x259B: return pack(2, 2, 7, false);
+            case 0x259C: return pack(2, 2, 11, false);
+            case 0x259D: return pack(2, 2, 2, false);
+            case 0x259E: return pack(2, 2, 6, false);
+            case 0x259F: return pack(2, 2, 14, false);
+            case 0x1FBCE: return pack(3, 1, 3, false);
+            case 0x1FBCF: return pack(3, 1, 1, false);
+            case 0x1FBE4: return pack(4, 2, 6, false);
+            case 0x1FBE5: return pack(4, 2, 96, false);
+        }
+        if (codePoint >= 0x1CC21 && codePoint <= 0x1CC2F)
+            return pack(2, 2, codePoint - 0x1CC20, true);
+        if (codePoint >= 0x1CE90 && codePoint <= 0x1CE9F)
+            return pack(4, 4, 1 << (codePoint - 0x1CE90), false);
+
         if (codePoint >= OCTANT_START && codePoint <= OCTANT_END)
             return OCTANT_SPECS[codePoint - OCTANT_START];
 
