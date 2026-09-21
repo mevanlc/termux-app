@@ -75,4 +75,57 @@ public class DecSetTest extends TerminalTestCase {
 		enterString("\033[?7hhij").assertLinesAre("abh", "ij ", "   ");
 	}
 
+	/** DECSET 2026, controls synchronized update mode. */
+	public void testSynchronizedUpdateMode() {
+		withTerminalSized(3, 3);
+		assertFalse("Initially synchronized update should be disabled", mTerminal.isSyncUpdate());
+
+		// Query mode status (DECRQM) -> 2 = reset
+		enterString("\033[?2026$p");
+		assertEquals("\033[?2026;2$y", mOutput.getOutputAndClear());
+
+		// Write initial text
+		enterString("abc");
+		assertEquals("abc", mTerminal.getScreen().getSelectedText(0, 0, 3, 1).trim());
+
+		// Enter Mode 2026
+		enterString("\033[?2026h");
+		assertTrue("Synchronized update should be enabled", mTerminal.isSyncUpdate());
+		assertEquals(0, mTerminal.getCursorRowForRendering());
+		assertEquals(2, mTerminal.getCursorColForRendering());
+		TerminalBuffer snapshot = mTerminal.getScreenForRendering();
+		assertEquals("abc", snapshot.getSelectedText(0, 0, 3, 0));
+
+		// Query mode status (DECRQM) -> 1 = set
+		enterString("\033[?2026$p");
+		assertEquals("\033[?2026;1$y", mOutput.getOutputAndClear());
+
+		// Write text while in sync mode: live screen changes, but snapshot remains frozen
+		enterString("\rxyz");
+		// Live screen has xyz
+		assertEquals("xyz", mTerminal.getScreen().getSelectedText(0, 0, 3, 1).trim());
+		// Snapshot still has abc
+		assertEquals("abc", snapshot.getSelectedText(0, 0, 3, 0));
+
+		// Exit Mode 2026
+		enterString("\033[?2026l");
+		assertFalse("Synchronized update should be disabled", mTerminal.isSyncUpdate());
+
+		// Query mode status (DECRQM) -> 2 = reset
+		enterString("\033[?2026$p");
+		assertEquals("\033[?2026;2$y", mOutput.getOutputAndClear());
+
+		// Test reset() clears sync mode
+		enterString("\033[?2026h");
+		assertTrue(mTerminal.isSyncUpdate());
+		mTerminal.reset();
+		assertFalse("reset() should disable synchronized update", mTerminal.isSyncUpdate());
+
+		// Test soft reset (\033[!p) clears sync mode
+		enterString("\033[?2026h");
+		assertTrue(mTerminal.isSyncUpdate());
+		enterString("\033[!p");
+		assertFalse("Soft reset should disable synchronized update", mTerminal.isSyncUpdate());
+	}
+
 }

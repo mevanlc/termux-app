@@ -11,6 +11,7 @@ This fork is based on a recent upstream `master` (June 2026, post-`v0.118.3`)
 and adds:
 
 - terminal graphics: Sixel and iTerm2 inline image rendering;
+- synchronized output (DECSET 2026) for complete TUI frame updates;
 - built-in rendering of Unicode octant, sextant, and block glyphs;
 - real bold/italic terminal font variants via `font-bold.ttf`,
   `font-italic.ttf`, and `font-bold-italic.ttf`;
@@ -28,6 +29,18 @@ and adds:
   and line-wrap corrections).
 
 Everything else behaves like upstream Termux unless noted below.
+
+### synchronized output
+
+Applications can bracket a screen update with `CSI ? 2026 h` and
+`CSI ? 2026 l`. While the update is in progress, the displayed text,
+scrollback, images, colors, and cursor appearance stay frozen. Incoming
+output continues to be processed, including terminal queries. Support and
+current mode state can be queried with `CSI ? 2026 $ p`.
+
+A two-second timeout releases an unfinished update. Repeating the start
+sequence extends the timeout without replacing the frozen frame. Terminal
+reset, grid resize, and process exit also release it.
 
 ### terminal graphics
 

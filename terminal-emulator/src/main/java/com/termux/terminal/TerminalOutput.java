@@ -34,4 +34,7 @@ public abstract class TerminalOutput {
 
     public abstract void onColorsChanged();
 
+    /** Notify the terminal client that synchronized update mode (DECSET 2026) has started or stopped. */
+    public void onSyncUpdate(boolean active) {}
+
 }

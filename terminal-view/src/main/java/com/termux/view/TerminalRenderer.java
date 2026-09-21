@@ -91,15 +91,15 @@ public final class TerminalRenderer {
     /** Render the terminal to a canvas with at a specified row scroll, and an optional rectangular selection. */
     public final void render(TerminalEmulator mEmulator, Canvas canvas, int topRow,
                              int selectionY1, int selectionY2, int selectionX1, int selectionX2) {
-        final boolean reverseVideo = mEmulator.isReverseVideo();
+        final boolean reverseVideo = mEmulator.isReverseVideoForRendering();
         final int endRow = topRow + mEmulator.mRows;
         final int columns = mEmulator.mColumns;
-        final int cursorCol = mEmulator.getCursorCol();
-        final int cursorRow = mEmulator.getCursorRow();
-        final boolean cursorVisible = mEmulator.shouldCursorBeVisible();
-        final TerminalBuffer screen = mEmulator.getScreen();
-        final int[] palette = mEmulator.mColors.mCurrentColors;
-        final int cursorShape = mEmulator.getCursorStyle();
+        final int cursorCol = mEmulator.getCursorColForRendering();
+        final int cursorRow = mEmulator.getCursorRowForRendering();
+        final boolean cursorVisible = mEmulator.isCursorVisibleForRendering();
+        final TerminalBuffer screen = mEmulator.getScreenForRendering();
+        final int[] palette = mEmulator.getColorsForRendering();
+        final int cursorShape = mEmulator.getCursorStyleForRendering();
         final int defaultBackground = palette[TextStyle.COLOR_INDEX_BACKGROUND];
 
         if (reverseVideo)
@@ -136,12 +136,12 @@ public final class TerminalRenderer {
                 final int codePoint = charIsHighsurrogate ? Character.toCodePoint(charAtIndex, line[currentCharIndex + 1]) : charAtIndex;
                 final long style = lineObject.getStyle(column);
                 if (TextStyle.isTerminalBitmap(style)) {
-                    Bitmap bitmap = mEmulator.getScreen().getSixelBitmap(style);
+                    Bitmap bitmap = screen.getSixelBitmap(style);
                     if (bitmap != null) {
                         flushBlockGlyphBatch(canvas);
                         float left = column * mFontWidth;
                         float top = heightOffset - mFontLineSpacing;
-                        Rect bitmapSrcRect = mEmulator.getScreen().getSixelRect(style);
+                        Rect bitmapSrcRect = screen.getSixelRect(style);
                         RectF bitmapDestRect = new RectF(left, top, left + mFontWidth, top + mFontLineSpacing);
                         canvas.drawBitmap(bitmap, bitmapSrcRect, bitmapDestRect, mBrightness == 1.f ? null : mBitmapPaint);
                     }
@@ -163,7 +163,7 @@ public final class TerminalRenderer {
                     if (lastRunStartColumn >= 0 && column > lastRunStartColumn) {
                         final int columnWidthSinceLastRun = column - lastRunStartColumn;
                         final int charsSinceLastRun = currentCharIndex - lastRunStartIndex;
-                        int cursorColor = lastRunInsideCursor ? mEmulator.mColors.mCurrentColors[TextStyle.COLOR_INDEX_CURSOR] : 0;
+                        int cursorColor = lastRunInsideCursor ? palette[TextStyle.COLOR_INDEX_CURSOR] : 0;
                         boolean invertCursorTextColor = false;
                         if (lastRunInsideCursor && cursorShape == TerminalEmulator.TERMINAL_CURSOR_STYLE_BLOCK) {
                             invertCursorTextColor = true;
@@ -173,7 +173,7 @@ public final class TerminalRenderer {
                             cursorColor, cursorShape, lastRunStyle, reverseVideo || invertCursorTextColor || lastRunInsideSelection);
                     }
 
-                    int cursorColor = insideCursor ? mEmulator.mColors.mCurrentColors[TextStyle.COLOR_INDEX_CURSOR] : 0;
+                    int cursorColor = insideCursor ? palette[TextStyle.COLOR_INDEX_CURSOR] : 0;
                     boolean invertCursorTextColor = false;
                     if (insideCursor && cursorShape == TerminalEmulator.TERMINAL_CURSOR_STYLE_BLOCK) {
                         invertCursorTextColor = true;
@@ -210,7 +210,7 @@ public final class TerminalRenderer {
                     } else {
                         final int columnWidthSinceLastRun = column - lastRunStartColumn;
                         final int charsSinceLastRun = currentCharIndex - lastRunStartIndex;
-                        int cursorColor = lastRunInsideCursor ? mEmulator.mColors.mCurrentColors[TextStyle.COLOR_INDEX_CURSOR] : 0;
+                        int cursorColor = lastRunInsideCursor ? palette[TextStyle.COLOR_INDEX_CURSOR] : 0;
                         boolean invertCursorTextColor = false;
                         if (lastRunInsideCursor && cursorShape == TerminalEmulator.TERMINAL_CURSOR_STYLE_BLOCK) {
                             invertCursorTextColor = true;
@@ -239,7 +239,7 @@ public final class TerminalRenderer {
 
             final int columnWidthSinceLastRun = columns - lastRunStartColumn;
             final int charsSinceLastRun = currentCharIndex - lastRunStartIndex;
-            int cursorColor = lastRunInsideCursor ? mEmulator.mColors.mCurrentColors[TextStyle.COLOR_INDEX_CURSOR] : 0;
+            int cursorColor = lastRunInsideCursor ? palette[TextStyle.COLOR_INDEX_CURSOR] : 0;
             boolean invertCursorTextColor = false;
             if (lastRunInsideCursor && cursorShape == TerminalEmulator.TERMINAL_CURSOR_STYLE_BLOCK) {
                 invertCursorTextColor = true;

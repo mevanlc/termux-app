@@ -246,6 +246,29 @@ public final class TerminalSession extends TerminalOutput {
         return mEmulator;
     }
 
+    /**
+     * Safety timeout in milliseconds for DEC Mode 2026 (synchronized output).
+     * Matches Kitty's 2000 ms fallback timeout to prevent the terminal from remaining
+     * frozen if a client application crashes or stalls mid-frame.
+     */
+    private static final int SYNC_UPDATE_TIMEOUT_MS = 2000;
+
+    private final Runnable mSyncTimeoutRunnable = () -> {
+        if (mEmulator != null && mEmulator.isSyncUpdate()) {
+            mEmulator.finishSyncUpdate();
+        }
+    };
+
+    @Override
+    public void onSyncUpdate(boolean active) {
+        mMainThreadHandler.removeCallbacks(mSyncTimeoutRunnable);
+        if (active) {
+            mMainThreadHandler.postDelayed(mSyncTimeoutRunnable, SYNC_UPDATE_TIMEOUT_MS);
+        } else {
+            notifyScreenUpdate();
+        }
+    }
+
     /** Notify the {@link #mClient} that the screen has changed. */
     protected void notifyScreenUpdate() {
         mClient.onTextChanged(this);
@@ -275,6 +298,8 @@ public final class TerminalSession extends TerminalOutput {
             mShellExitStatus = exitStatus;
         }
 
+        mMainThreadHandler.removeCallbacks(mSyncTimeoutRunnable);
+        if (mEmulator != null) mEmulator.finishSyncUpdate();
         // Stop the reader and writer threads, and close the I/O streams
         mTerminalToProcessIOQueue.close();
         mProcessToTerminalIOQueue.close();
@@ -369,7 +394,9 @@ public final class TerminalSession extends TerminalOutput {
             int bytesRead = mProcessToTerminalIOQueue.read(mReceiveBuffer, false);
             if (bytesRead > 0) {
                 mEmulator.append(mReceiveBuffer, bytesRead);
-                notifyScreenUpdate();
+                if (!mEmulator.isSyncUpdate()) {
+                    notifyScreenUpdate();
+                }
             }
 
             if (msg.what == MSG_PROCESS_EXITED) {

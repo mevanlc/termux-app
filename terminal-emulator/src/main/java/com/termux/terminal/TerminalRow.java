@@ -51,6 +51,8 @@ public final class TerminalRow {
     boolean mHasNonOneWidthOrSurrogateChars;
     /** If this row has a {@link TerminalBitmap}. Used for performance only. */
     public boolean mHasTerminalBitmap;
+    /** Shared with a buffer snapshot; detach the row before modifying it. */
+    boolean mShared;
 
     /** Construct a blank row (containing only whitespace, ' ') with a specified style. */
     public TerminalRow(int columns, long style) {
@@ -58,6 +60,18 @@ public final class TerminalRow {
         mText = new char[(int) (SPARE_CAPACITY_FACTOR * columns)];
         mStyle = new long[columns];
         clear(style);
+    }
+
+    void copyFrom(TerminalRow other) {
+        this.mSpaceUsed = other.mSpaceUsed;
+        this.mLineWrap = other.mLineWrap;
+        this.mHasNonOneWidthOrSurrogateChars = other.mHasNonOneWidthOrSurrogateChars;
+        this.mHasTerminalBitmap = other.mHasTerminalBitmap;
+        if (this.mText.length < other.mSpaceUsed) {
+            this.mText = new char[other.mText.length];
+        }
+        System.arraycopy(other.mText, 0, this.mText, 0, other.mSpaceUsed);
+        System.arraycopy(other.mStyle, 0, this.mStyle, 0, mColumns);
     }
 
     /** NOTE: The sourceX2 is exclusive. */

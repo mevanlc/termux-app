@@ -96,7 +96,7 @@ public class TextSelectionCursorController implements CursorController {
         mSelX1 = mSelX2 = columnAndRow[0];
         mSelY1 = mSelY2 = columnAndRow[1];
 
-        TerminalBuffer screen = terminalView.mEmulator.getScreen();
+        TerminalBuffer screen = terminalView.mEmulator.getScreenForRendering();
         if (!" ".equals(screen.getSelectedText(mSelX1, mSelY1, mSelX1, mSelY1))) {
             // Selecting something other than whitespace. Expand to word.
             while (mSelX1 > 0 && !"".equals(screen.getSelectedText(mSelX1 - 1, mSelY1, mSelX1 - 1, mSelY1))) {
@@ -242,7 +242,7 @@ public class TextSelectionCursorController implements CursorController {
 
     @Override
     public void updatePosition(TextSelectionHandleView handle, int x, int y) {
-        TerminalBuffer screen = terminalView.mEmulator.getScreen();
+        TerminalBuffer screen = terminalView.mEmulator.getScreenForRendering();
         final int scrollRows = screen.getActiveRows() - terminalView.mEmulator.mRows;
         if (handle == mStartHandle) {
             mSelX1 = terminalView.getCursorX(x);

@@ -95,6 +95,27 @@ public final class TerminalBuffer {
         mTerminalBitmapsLastGC = SystemClock.uptimeMillis();
     }
 
+    /** Preserve the row layout and bitmap ownership without copying all scrollback text. */
+    private TerminalBuffer(TerminalBuffer source) {
+        mClient = source.mClient;
+        mColumns = source.mColumns;
+        mTotalRows = source.mTotalRows;
+        mScreenRows = source.mScreenRows;
+        mActiveTranscriptRows = source.mActiveTranscriptRows;
+        mScreenFirstRow = source.mScreenFirstRow;
+        mLines = source.mLines.clone();
+        for (TerminalRow line : mLines) {
+            if (line != null) line.mShared = true;
+        }
+        // Finished bitmaps are immutable. Retain them even if the live buffer drops or reuses their IDs.
+        mTerminalBitmaps = new HashMap<>(source.mTerminalBitmaps);
+        mTerminalBitmapsLastGC = source.mTerminalBitmapsLastGC;
+    }
+
+    TerminalBuffer snapshot() {
+        return new TerminalBuffer(this);
+    }
+
 
 
     public TerminalSessionClient getClient() {
@@ -246,7 +267,7 @@ public final class TerminalBuffer {
     }
 
     public void setLineWrap(int row) {
-        mLines[externalToInternalRow(row)].mLineWrap = true;
+        mutableLine(externalToInternalRow(row)).mLineWrap = true;
     }
 
     public boolean getLineWrap(int row) {
@@ -254,7 +275,7 @@ public final class TerminalBuffer {
     }
 
     public void clearLineWrap(int row) {
-        mLines[externalToInternalRow(row)].mLineWrap = false;
+        mutableLine(externalToInternalRow(row)).mLineWrap = false;
     }
 
     /**
@@ -285,7 +306,7 @@ public final class TerminalBuffer {
                 if (shiftDownOfTopRow != actualShift) {
                     // The new lines revealed by the resizing are not all from the transcript. Blank the below ones.
                     for (int i = 0; i < actualShift - shiftDownOfTopRow; i++)
-                        allocateFullLineIfNecessary((mScreenFirstRow + mScreenRows + i) % mTotalRows).clear(currentStyle);
+                        mutableLine((mScreenFirstRow + mScreenRows + i) % mTotalRows).clear(currentStyle);
                     shiftDownOfTopRow = actualShift;
                 }
             }
@@ -470,7 +491,7 @@ public final class TerminalBuffer {
             if(mLines[blankRow].mHasTerminalBitmap) {
                 removeScrolledOutTerminalBitmaps(blankRow);
             }
-            mLines[blankRow].clear(style);
+            mutableLine(blankRow).clear(style);
         }
     }
 
@@ -494,7 +515,7 @@ public final class TerminalBuffer {
         for (int y = 0; y < h; y++) {
             int y2 = copyingUp ? y : (h - (y + 1));
             TerminalRow sourceRow = allocateFullLineIfNecessary(externalToInternalRow(sy + y2));
-            allocateFullLineIfNecessary(externalToInternalRow(dy + y2)).copyInterval(sourceRow, sx, sx + w, dx);
+            mutableLine(externalToInternalRow(dy + y2)).copyInterval(sourceRow, sx, sx + w, dx);
         }
     }
 
@@ -517,15 +538,26 @@ public final class TerminalBuffer {
         }
     }
 
+    /** Get a row for reading. Mutations must use {@link #mutableLine(int)} to preserve snapshots. */
     public TerminalRow allocateFullLineIfNecessary(int row) {
         return (mLines[row] == null) ? (mLines[row] = new TerminalRow(mColumns, 0)) : mLines[row];
+    }
+
+    private TerminalRow mutableLine(int row) {
+        TerminalRow line = allocateFullLineIfNecessary(row);
+        if (line.mShared) {
+            TerminalRow copy = new TerminalRow(mColumns, 0);
+            copy.copyFrom(line);
+            mLines[row] = line = copy;
+        }
+        return line;
     }
 
     public void setChar(int column, int row, int codePoint, long style) {
         if (row  < 0 || row >= mScreenRows || column < 0 || column >= mColumns)
             throw new IllegalArgumentException("TerminalBuffer.setChar(): row=" + row + ", column=" + column + ", mScreenRows=" + mScreenRows + ", mColumns=" + mColumns);
         row = externalToInternalRow(row);
-        allocateFullLineIfNecessary(row).setChar(column, codePoint, style);
+        mutableLine(row).setChar(column, codePoint, style);
     }
 
     public long getStyleAt(int externalRow, int column) {
@@ -536,7 +568,7 @@ public final class TerminalBuffer {
     public void setOrClearEffect(int bits, boolean setOrClear, boolean reverse, boolean rectangular, int leftMargin, int rightMargin, int top, int left,
                                  int bottom, int right) {
         for (int y = top; y < bottom; y++) {
-            TerminalRow line = mLines[externalToInternalRow(y)];
+            TerminalRow line = mutableLine(externalToInternalRow(y));
             int startOfLine = (rectangular || y == top) ? left : leftMargin;
             int endOfLine = (rectangular || y + 1 == bottom) ? right : rightMargin;
             for (int x = startOfLine; x < endOfLine; x++) {

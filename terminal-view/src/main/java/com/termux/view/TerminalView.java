@@ -210,7 +210,7 @@ public final class TerminalView extends View {
                 if (mouseTrackingAtStartOfFling) {
                     mScroller.fling(0, 0, 0, -(int) (velocityY * SCALE), 0, 0, -mEmulator.mRows / 2, mEmulator.mRows / 2);
                 } else {
-                    mScroller.fling(0, mTopRow, 0, -(int) (velocityY * SCALE), 0, 0, -mEmulator.getScreen().getActiveTranscriptRows(), 0);
+                    mScroller.fling(0, mTopRow, 0, -(int) (velocityY * SCALE), 0, 0, -mEmulator.getScreenForRendering().getActiveTranscriptRows(), 0);
                 }
 
                 post(new Runnable() {
@@ -455,7 +455,7 @@ public final class TerminalView extends View {
 
     @Override
     protected int computeVerticalScrollRange() {
-        return mEmulator == null ? 1 : mEmulator.getScreen().getActiveRows();
+        return mEmulator == null ? 1 : mEmulator.getScreenForRendering().getActiveRows();
     }
 
     @Override
@@ -465,7 +465,7 @@ public final class TerminalView extends View {
 
     @Override
     protected int computeVerticalScrollOffset() {
-        return mEmulator == null ? 1 : mEmulator.getScreen().getActiveRows() + mTopRow - mEmulator.mRows;
+        return mEmulator == null ? 1 : mEmulator.getScreenForRendering().getActiveRows() + mTopRow - mEmulator.mRows;
     }
 
     public void onScreenUpdated() {
@@ -474,8 +474,13 @@ public final class TerminalView extends View {
 
     public void onScreenUpdated(boolean skipScrolling) {
         if (mEmulator == null) return;
+        // Live scroll counters belong to the next frame, not the frozen display.
+        if (mEmulator.isSyncUpdate()) {
+            invalidate();
+            return;
+        }
 
-        int rowsInHistory = mEmulator.getScreen().getActiveTranscriptRows();
+        int rowsInHistory = mEmulator.getScreenForRendering().getActiveTranscriptRows();
         if (mTopRow < -rowsInHistory) mTopRow = -rowsInHistory;
 
         if (isSelectingText() || mEmulator.isAutoScrollDisabled()) {
@@ -640,7 +645,7 @@ public final class TerminalView extends View {
                 // e.g. less, which shifts to the alt screen without mouse handling.
                 handleKeyCode(up ? KeyEvent.KEYCODE_DPAD_UP : KeyEvent.KEYCODE_DPAD_DOWN, 0);
             } else {
-                mTopRow = Math.min(0, Math.max(-(mEmulator.getScreen().getActiveTranscriptRows()), mTopRow + (up ? -1 : 1)));
+                mTopRow = Math.min(0, Math.max(-(mEmulator.getScreenForRendering().getActiveTranscriptRows()), mTopRow + (up ? -1 : 1)));
                 if (!awakenScrollBars()) invalidate();
             }
         }
@@ -1093,7 +1098,7 @@ public final class TerminalView extends View {
     }
 
     private CharSequence getText() {
-        return mEmulator.getScreen().getSelectedText(0, mTopRow, mEmulator.mColumns, mTopRow + mEmulator.mRows);
+        return mEmulator.getScreenForRendering().getSelectedText(0, mTopRow, mEmulator.mColumns, mTopRow + mEmulator.mRows);
     }
 
     public int getCursorX(float x) {

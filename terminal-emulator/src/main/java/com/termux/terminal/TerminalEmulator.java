@@ -212,6 +212,13 @@ public final class TerminalEmulator {
     private static final int DECSET_BIT_LEFTRIGHT_MARGIN_MODE = 1 << 11;
     /** Not really DECSET bit... - http://www.vt100.net/docs/vt510-rm/DECSACE */
     private static final int DECSET_BIT_RECTANGULAR_CHANGEATTRIBUTE = 1 << 12;
+    /** DECSET 2026 - Synchronized Output */
+    private static final int DECSET_BIT_SYNCHRONIZED_UPDATE = 1 << 13;
+
+    private TerminalBuffer mSyncScreen;
+    private int[] mSyncColors;
+    private int mSyncCursorRow, mSyncCursorCol, mSyncCursorStyle;
+    private boolean mSyncCursorVisible, mSyncReverseVideo;
 
 
     private String mTitle;
@@ -486,6 +493,8 @@ public final class TerminalEmulator {
                 return DECSET_BIT_MOUSE_PROTOCOL_SGR;
             case 2004:
                 return DECSET_BIT_BRACKETED_PASTE_MODE;
+            case 2026:
+                return DECSET_BIT_SYNCHRONIZED_UPDATE;
             default:
                 return -1;
             // throw new IllegalArgumentException("Unsupported decset: " + decsetBit);
@@ -580,6 +589,8 @@ public final class TerminalEmulator {
             throw new IllegalArgumentException("rows=" + rows + ", columns=" + columns);
         }
 
+        finishSyncUpdate();
+
         if (mRows != rows) {
             mRows = rows;
             mTopMargin = 0;
@@ -671,6 +682,72 @@ public final class TerminalEmulator {
     /** If mouse events are being sent as escape codes to the terminal. */
     public boolean isMouseTrackingActive() {
         return isDecsetInternalBitSet(DECSET_BIT_MOUSE_TRACKING_PRESS_RELEASE) || isDecsetInternalBitSet(DECSET_BIT_MOUSE_TRACKING_BUTTON_EVENT);
+    }
+
+    public boolean isSyncUpdate() {
+        return isDecsetInternalBitSet(DECSET_BIT_SYNCHRONIZED_UPDATE);
+    }
+
+    /** The frozen display, including scrollback, while output is synchronized. */
+    public TerminalBuffer getScreenForRendering() {
+        return isSyncUpdate() ? mSyncScreen : mScreen;
+    }
+
+    public int[] getColorsForRendering() {
+        return isSyncUpdate() ? mSyncColors : mColors.mCurrentColors;
+    }
+
+    public int getCursorRowForRendering() {
+        return isSyncUpdate() ? mSyncCursorRow : mCursorRow;
+    }
+
+    public int getCursorColForRendering() {
+        return isSyncUpdate() ? mSyncCursorCol : mCursorCol;
+    }
+
+    public boolean isCursorVisibleForRendering() {
+        return isSyncUpdate() ? mSyncCursorVisible : shouldCursorBeVisible();
+    }
+
+    public int getCursorStyleForRendering() {
+        return isSyncUpdate() ? mSyncCursorStyle : mCursorStyle;
+    }
+
+    public boolean isReverseVideoForRendering() {
+        return isSyncUpdate() ? mSyncReverseVideo : isReverseVideo();
+    }
+
+    public void setSyncUpdate(boolean setting) {
+        if (setting) {
+            if (!isSyncUpdate()) {
+                mSyncScreen = mScreen.snapshot();
+                mSyncColors = mColors.mCurrentColors.clone();
+                mSyncCursorRow = mCursorRow;
+                mSyncCursorCol = mCursorCol;
+                mSyncCursorStyle = mCursorStyle;
+                mSyncCursorVisible = shouldCursorBeVisible();
+                mSyncReverseVideo = isReverseVideo();
+                setDecsetinternalBit(DECSET_BIT_SYNCHRONIZED_UPDATE, true);
+            }
+            // Repeated starts extend the timeout without exposing an incomplete frame.
+            mSession.onSyncUpdate(true);
+        } else {
+            finishSyncUpdate();
+        }
+    }
+
+    public void finishSyncUpdate() {
+        if (!isSyncUpdate()) return;
+        boolean colorsChanged = !Arrays.equals(mSyncColors, mColors.mCurrentColors);
+        setDecsetinternalBit(DECSET_BIT_SYNCHRONIZED_UPDATE, false);
+        mSyncScreen = null;
+        mSyncColors = null;
+        if (colorsChanged) mSession.onColorsChanged();
+        mSession.onSyncUpdate(false);
+    }
+
+    private void notifyColorsChanged() {
+        if (!isSyncUpdate()) mSession.onColorsChanged();
     }
 
     private void setDefaultTabStops() {
@@ -1785,6 +1862,11 @@ public final class TerminalEmulator {
     }
 
     public void doDecSetOrReset(boolean setting, int externalBit) {
+        // This mode owns its transition so the end callback observes the previous state.
+        if (externalBit == 2026) {
+            setSyncUpdate(setting);
+            return;
+        }
         int internalBit = mapDecSetBitToInternalBit(externalBit);
         if (internalBit != -1) {
             setDecsetinternalBit(internalBit, setting);
@@ -2812,7 +2894,7 @@ public final class TerminalEmulator {
                                 return;
                             } else {
                                 mColors.tryParseColor(colorIndex, textParameter.substring(parsingPairStart, i));
-                                mSession.onColorsChanged();
+                                notifyColorsChanged();
                                 colorIndex = -1;
                                 parsingPairStart = -1;
                             }
@@ -2848,7 +2930,7 @@ public final class TerminalEmulator {
                                     + String.format(Locale.US, "%04x", b) + bellOrStringTerminator);
                             } else {
                                 mColors.tryParseColor(specialIndex, colorSpec);
-                                mSession.onColorsChanged();
+                                notifyColorsChanged();
                             }
                             specialIndex++;
                             if (endOfInput || (specialIndex > TextStyle.COLOR_INDEX_CURSOR) || ++charIndex >= textParameter.length())
@@ -2876,7 +2958,7 @@ public final class TerminalEmulator {
                 // parameters are given, the entire table will be reset.
                 if (textParameter.isEmpty()) {
                     mColors.reset();
-                    mSession.onColorsChanged();
+                    notifyColorsChanged();
                 } else {
                     int lastIndex = 0;
                     for (int charIndex = 0; ; charIndex++) {
@@ -2885,7 +2967,7 @@ public final class TerminalEmulator {
                             try {
                                 int colorToReset = Integer.parseInt(textParameter.substring(lastIndex, charIndex));
                                 mColors.reset(colorToReset);
-                                mSession.onColorsChanged();
+                                notifyColorsChanged();
                                 if (endOfInput) break;
                                 charIndex++;
                                 lastIndex = charIndex;
@@ -2900,7 +2982,7 @@ public final class TerminalEmulator {
             case 111: // Reset background color.
             case 112: // Reset cursor color.
                 mColors.reset(TextStyle.COLOR_INDEX_FOREGROUND + (value - 110));
-                mSession.onColorsChanged();
+                notifyColorsChanged();
                 break;
             case 119: // Reset highlight color.
                 break;
@@ -3487,6 +3569,7 @@ public final class TerminalEmulator {
 
     /** Reset terminal state so user can interact with it regardless of present state. */
     public void reset() {
+        finishSyncUpdate();
         setCursorStyle();
         mArgIndex = 0;
         mContinueSequence = false;
@@ -3515,7 +3598,7 @@ public final class TerminalEmulator {
         mUtf8Index = mUtf8ToFollow = 0;
 
         mColors.reset();
-        mSession.onColorsChanged();
+        notifyColorsChanged();
 
         clearTerminalControlArgs();
         clearOscTypeVariables();
@@ -3523,7 +3606,7 @@ public final class TerminalEmulator {
     }
 
     public String getSelectedText(int x1, int y1, int x2, int y2) {
-        return mScreen.getSelectedText(x1, y1, x2, y2);
+        return getScreenForRendering().getSelectedText(x1, y1, x2, y2);
     }
 
     /** Get the terminal session's title (null if not set). */
