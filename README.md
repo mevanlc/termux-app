@@ -189,7 +189,11 @@ is the classic format, an object is panels.
 Both are re-read by `termux-reload-settings`, which rebuilds the panels and
 returns to the default one.
 
-### toolbar text input history
+### toolbar text input
+
+Backspace sends a backspace to the terminal when the field is empty, or when
+the cursor is at the start with no text selected. Otherwise it edits the field
+normally. This works with both IME deletion requests and keyboard key events.
 
 The toolbar's text input field keeps the last 20 submitted entries for the
 lifetime of the activity (not persisted across restarts). Fling up on the

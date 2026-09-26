@@ -61,7 +61,8 @@ public class TerminalToolbarViewPager {
                 extraKeysView.reload(panel.getExtraKeysInfo(), mActivity.getTerminalToolbarDefaultHeight());
             } else {
                 layout = inflater.inflate(R.layout.view_terminal_toolbar_text_input, collection, false);
-                final EditText editText = layout.findViewById(R.id.terminal_toolbar_text_input);
+                final TerminalToolbarTextInput editText = layout.findViewById(R.id.terminal_toolbar_text_input);
+                editText.setTerminalView(mActivity.getTerminalView());
 
                 if (mSavedTextInput != null) {
                     editText.setText(mSavedTextInput);
