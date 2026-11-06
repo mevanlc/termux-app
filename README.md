@@ -18,7 +18,7 @@ and adds:
   `font-italic.ttf`, and `font-bold-italic.ttf`;
 - extra-keys toolbar improvements: any number of named key panels loaded from a
   json file, double-tap modifier locking, swipe-up key cancellation, and a
-  scroll-lock icon;
+  scroll-lock icon with a third state for game mode;
 - a swipe-navigable history for the toolbar text input;
 - per-session font zoom, a configurable minimum zoom size, and a configurable
   pinch-zoom step;
@@ -108,9 +108,18 @@ Nerd Font distributions, are fine). Reload with `termux-reload-settings`.
 - **Swipe-up cancellation**: pressing a key and sliding the finger up off the
   button before releasing cancels the key press (or opens the key's popup, if
   it defines one) instead of firing the key.
-- **Scroll-lock icon**: the `SCROLL` key (which toggles auto-scroll-to-bottom,
-  an upstream feature) now shows an icon instead of text — outlined when
-  auto-scroll is on, filled when scroll lock is engaged.
+- **Scroll lock and game mode**: tap `SCROLL` to toggle scroll lock (disable
+  auto-scroll-to-bottom). Double-tap or long-press it to toggle game mode,
+  which also enables scroll lock. The icon is outlined when off, filled for
+  scroll lock, and filled with a button border for game mode, like locked
+  modifiers. A tap in game mode turns both off; double-tapping or long-pressing
+  in game mode returns to ordinary scroll lock. State is kept per session.
+  Game mode blocks terminal-area long-press text selection/context menus even
+  without mouse tracking. With mouse tracking enabled, touching the terminal
+  immediately sends a left-button press, finger drags send wheel events while
+  the button stays held, and lifting the finger sends the release. Cancelled
+  touches release the button too; game-mode scrolling has no mouse-wheel
+  inertia after release.
 - **Horizontal scroll reporting**: when scroll lock is engaged and the
   foreground app has mouse tracking active, horizontal finger drags are
   reported to the app as wheel-left/wheel-right events (buttons 66/67).

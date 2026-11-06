@@ -2,8 +2,10 @@ package com.termux.app.terminal.io;
 
 import android.annotation.SuppressLint;
 import android.content.res.ColorStateList;
+import android.os.SystemClock;
 import android.view.Gravity;
 import android.view.View;
+import android.view.ViewConfiguration;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -27,6 +29,7 @@ import com.termux.shared.termux.extrakeys.SpecialButtonState;
 import com.termux.shared.termux.settings.properties.TermuxPropertyConstants;
 import com.termux.shared.termux.settings.properties.TermuxSharedProperties;
 import com.termux.shared.termux.terminal.io.TerminalExtraKeys;
+import com.termux.terminal.TerminalEmulator;
 import com.termux.view.TerminalView;
 
 import org.json.JSONException;
@@ -43,6 +46,11 @@ public class TermuxTerminalExtraKeys extends TerminalExtraKeys {
 
     private ExtraKeysLayout mExtraKeysLayout;
     private final List<MaterialButton> mScrollButtons = new ArrayList<>();
+    private final TerminalView mTerminalView;
+    private MaterialButton mLastScrollTapButton;
+    private TerminalEmulator mLastScrollTapEmulator;
+    private long mLastScrollTapTime;
+    private boolean mLastScrollTapWasGameMode;
 
     /** The {@link SpecialButton} states shared by every {@link ExtraKeysView} panel of the terminal
      * toolbar, so that a modifier tapped on one panel applies to the keys of all of them and stays
@@ -59,6 +67,7 @@ public class TermuxTerminalExtraKeys extends TerminalExtraKeys {
                                    TermuxTerminalViewClient termuxTerminalViewClient,
                                    TermuxTerminalSessionActivityClient termuxTerminalSessionActivityClient) {
         super(terminalView);
+        mTerminalView = terminalView;
 
         mActivity = activity;
         mTermuxTerminalViewClient = termuxTerminalViewClient;
@@ -177,7 +186,7 @@ public class TermuxTerminalExtraKeys extends TerminalExtraKeys {
 
     @Override
     public void onExtraKeyButtonCreated(ExtraKeysView extraKeysView, ExtraKeyButton buttonInfo, MaterialButton button) {
-        if (!KEY_SCROLL.equals(buttonInfo.getKey()))
+        if (buttonInfo.isMacro() || !KEY_SCROLL.equals(buttonInfo.getKey()))
             return;
 
         button.setText("");
@@ -185,8 +194,40 @@ public class TermuxTerminalExtraKeys extends TerminalExtraKeys {
         button.setIconPadding(0);
         button.setIconSize(button.getResources().getDimensionPixelSize(R.dimen.extra_keys_scroll_icon_size));
         button.setIconGravity(MaterialButton.ICON_GRAVITY_TEXT_START);
+        button.setOnLongClickListener(view -> {
+            mLastScrollTapButton = null;
+            if (mTerminalView.mEmulator != null) {
+                mTerminalView.setGameModeEnabled(!mTerminalView.mEmulator.isGameModeEnabled());
+                updateScrollButtonIcons();
+            }
+            return true;
+        });
         mScrollButtons.add(button);
         updateScrollButtonIcon(extraKeysView, button);
+    }
+
+    @Override
+    public void onExtraKeyButtonClick(View view, ExtraKeyButton buttonInfo, MaterialButton button) {
+        TerminalEmulator emulator = mTerminalView.mEmulator;
+        if (!buttonInfo.isMacro() && KEY_SCROLL.equals(buttonInfo.getKey()) && emulator != null) {
+            long now = SystemClock.uptimeMillis();
+            if (button == mLastScrollTapButton && emulator == mLastScrollTapEmulator &&
+                now - mLastScrollTapTime <= ViewConfiguration.getDoubleTapTimeout()) {
+                // Undo the immediate first tap, then toggle game mode from the original state.
+                mTerminalView.toggleScrollLock();
+                mTerminalView.setGameModeEnabled(!mLastScrollTapWasGameMode);
+                mLastScrollTapButton = null;
+                updateScrollButtonIcons();
+                return;
+            }
+            mLastScrollTapButton = button;
+            mLastScrollTapEmulator = emulator;
+            mLastScrollTapTime = now;
+            mLastScrollTapWasGameMode = emulator.isGameModeEnabled();
+        } else {
+            mLastScrollTapButton = null;
+        }
+        super.onExtraKeyButtonClick(view, buttonInfo, button);
     }
 
     @SuppressLint("RtlHardcoded")
@@ -207,9 +248,8 @@ public class TermuxTerminalExtraKeys extends TerminalExtraKeys {
             if(mTermuxTerminalSessionActivityClient != null)
                 mTermuxTerminalSessionActivityClient.onPasteTextFromClipboard(null);
         }  else if (KEY_SCROLL.equals(key)) {
-            TerminalView terminalView = mTermuxTerminalViewClient.getActivity().getTerminalView();
-            if (terminalView != null && terminalView.mEmulator != null) {
-                terminalView.mEmulator.toggleAutoScrollDisabled();
+            if (mTerminalView.mEmulator != null) {
+                mTerminalView.toggleScrollLock();
                 updateScrollButtonIcons();
             }
         } else {
@@ -232,14 +272,19 @@ public class TermuxTerminalExtraKeys extends TerminalExtraKeys {
 
     private void updateScrollButtonIcon(ExtraKeysView extraKeysView, MaterialButton button) {
         boolean autoScrollDisabled = isAutoScrollDisabled();
+        boolean gameMode = mTerminalView.mEmulator != null && mTerminalView.mEmulator.isGameModeEnabled();
         button.setIconResource(autoScrollDisabled ? R.drawable.ic_scroll_lock_filled : R.drawable.ic_scroll_lock);
         button.setIconTint(ColorStateList.valueOf(autoScrollDisabled ?
             extraKeysView.getButtonActiveTextColor() : extraKeysView.getButtonTextColor()));
+        button.setStrokeColor(ColorStateList.valueOf(extraKeysView.getButtonActiveTextColor()));
+        float density = button.getResources().getDisplayMetrics().density;
+        button.setStrokeWidth(gameMode ? Math.max(1, (int) (density + 0.5f)) : 0);
+        button.setContentDescription(button.getContext().getString(gameMode ? R.string.extra_keys_game_mode :
+            autoScrollDisabled ? R.string.extra_keys_scroll_lock_on : R.string.extra_keys_scroll_lock_off));
     }
 
     private boolean isAutoScrollDisabled() {
-        TerminalView terminalView = mTermuxTerminalViewClient.getActivity().getTerminalView();
-        return terminalView != null && terminalView.mEmulator != null && terminalView.mEmulator.isAutoScrollDisabled();
+        return mTerminalView.mEmulator != null && mTerminalView.mEmulator.isAutoScrollDisabled();
     }
 
 }

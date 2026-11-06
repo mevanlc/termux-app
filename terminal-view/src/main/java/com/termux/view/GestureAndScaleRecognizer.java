@@ -27,7 +27,9 @@ final class GestureAndScaleRecognizer {
     }
 
     private final GestureDetector mGestureDetector;
+    private final GestureDetector.OnDoubleTapListener mDoubleTapListener;
     private final ScaleGestureDetector mScaleDetector;
+    private boolean mGameModeEnabled;
     final Listener mListener;
     boolean isAfterLongPress;
 
@@ -35,6 +37,11 @@ final class GestureAndScaleRecognizer {
         mListener = listener;
 
         mGestureDetector = new GestureDetector(context, new GestureDetector.SimpleOnGestureListener() {
+            @Override
+            public boolean onSingleTapUp(MotionEvent e) {
+                return mGameModeEnabled && mListener.onSingleTapUp(e);
+            }
+
             @Override
             public boolean onScroll(MotionEvent e1, MotionEvent e2, float dx, float dy) {
                 return mListener.onScroll(e2, dx, dy);
@@ -52,12 +59,13 @@ final class GestureAndScaleRecognizer {
 
             @Override
             public void onLongPress(MotionEvent e) {
+                if (mGameModeEnabled) return;
                 mListener.onLongPress(e);
                 isAfterLongPress = true;
             }
         }, null, true /* ignoreMultitouch */);
 
-        mGestureDetector.setOnDoubleTapListener(new GestureDetector.OnDoubleTapListener() {
+        mDoubleTapListener = new GestureDetector.OnDoubleTapListener() {
             @Override
             public boolean onSingleTapConfirmed(MotionEvent e) {
                 return mListener.onSingleTapUp(e);
@@ -72,7 +80,8 @@ final class GestureAndScaleRecognizer {
             public boolean onDoubleTapEvent(MotionEvent e) {
                 return true;
             }
-        });
+        };
+        mGestureDetector.setOnDoubleTapListener(mDoubleTapListener);
 
         mScaleDetector = new ScaleGestureDetector(context, new ScaleGestureDetector.SimpleOnScaleGestureListener() {
             @Override
@@ -107,6 +116,14 @@ final class GestureAndScaleRecognizer {
 
     public boolean isInProgress() {
         return mScaleDetector.isInProgress();
+    }
+
+    public void setGameModeEnabled(boolean enabled) {
+        if (mGameModeEnabled == enabled) return;
+        mGameModeEnabled = enabled;
+        mGestureDetector.setIsLongpressEnabled(!enabled);
+        // Double-tap recognition otherwise consumes movement during a quick second touch.
+        mGestureDetector.setOnDoubleTapListener(enabled ? null : mDoubleTapListener);
     }
 
 }

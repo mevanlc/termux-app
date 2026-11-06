@@ -76,6 +76,11 @@ public final class TerminalView extends View {
     /** Keep track of the time when a touch event leading to sending mouse scroll events started. */
     private long mMouseStartDownTime = -1;
 
+    /** A game-mode touch holds the left button until release or cancellation. */
+    private TerminalEmulator mGameMouseEmulator;
+    private int mGameMouseColumn, mGameMouseRow;
+    private boolean mGameTouchActive;
+
     final Scroller mScroller;
 
     /** What was left in from scrolling movement. */
@@ -142,6 +147,7 @@ public final class TerminalView extends View {
             public boolean onUp(MotionEvent event) {
                 mScrollRemainder = 0.0f;
                 mHorizontalScrollRemainder = 0.0f;
+                if (mGameTouchActive || (mEmulator != null && mEmulator.isGameModeEnabled())) return true;
                 if (mEmulator != null && mEmulator.isMouseTrackingActive() && !event.isFromSource(InputDevice.SOURCE_MOUSE) && !isSelectingText() && !scrolledWithFinger) {
                     // Quick event processing when mouse tracking is active - do not wait for check of double tapping
                     // for zooming.
@@ -171,9 +177,8 @@ public final class TerminalView extends View {
                 if (mEmulator == null) return true;
                 if (mEmulator.isMouseTrackingActive() && e.isFromSource(InputDevice.SOURCE_MOUSE)) {
                     // If moving with mouse pointer while pressing button, report that instead of scroll.
-                    // This means that we never report moving with button press-events for touch input,
-                    // since we cannot just start sending these events without a starting press event,
-                    // which we do not do for touch input, only mouse in onTouchEvent().
+                    // Finger movement remains wheel scrolling, including while game mode holds
+                    // the left button down.
                     sendMouseEventCode(e, TerminalEmulator.MOUSE_LEFT_BUTTON_MOVED, true);
                 } else {
                     scrolledWithFinger = true;
@@ -202,6 +207,8 @@ public final class TerminalView extends View {
             @Override
             public boolean onFling(final MotionEvent e2, float velocityX, float velocityY) {
                 if (mEmulator == null) return true;
+                // Game-mode wheel events belong to the held touch, with no inertia after release.
+                if (mEmulator.isGameModeEnabled() && mEmulator.isMouseTrackingActive()) return true;
                 // Do not start scrolling until last fling has been taken care of:
                 if (!mScroller.isFinished()) return true;
 
@@ -237,6 +244,8 @@ public final class TerminalView extends View {
 
             @Override
             public boolean onDown(float x, float y) {
+                scrolledWithFinger = false;
+                mScrollRemainder = mHorizontalScrollRemainder = 0.0f;
                 // Why is true not returned here?
                 // https://developer.android.com/training/gestures/detector.html#detect-a-subset-of-supported-gestures
                 // Although setting this to true still does not solve the following errors when long pressing in terminal view text area
@@ -254,6 +263,7 @@ public final class TerminalView extends View {
 
             @Override
             public void onLongPress(MotionEvent event) {
+                if (mEmulator != null && mEmulator.isGameModeEnabled()) return;
                 if (mGestureRecognizer.isInProgress()) return;
                 if (mClient.onLongPress(event)) return;
                 if (!isSelectingText()) {
@@ -305,6 +315,7 @@ public final class TerminalView extends View {
      */
     public boolean attachSession(TerminalSession session, float textSize) {
         if (session == mTermSession) return false;
+        releaseGameMouseButton();
         mTopRow = 0;
 
         if (textSize > 0)
@@ -319,6 +330,34 @@ public final class TerminalView extends View {
         setVerticalScrollBarEnabled(true);
 
         return true;
+    }
+
+    /** Toggle ordinary scroll lock; turning it off also exits game mode. */
+    public void toggleScrollLock() {
+        if (mEmulator == null) return;
+        releaseGameMouseButton();
+        mEmulator.toggleAutoScrollDisabled();
+        mGestureRecognizer.setGameModeEnabled(mEmulator.isGameModeEnabled());
+    }
+
+    public void setGameModeEnabled(boolean enabled) {
+        if (mEmulator == null) return;
+        releaseGameMouseButton();
+        mEmulator.setGameModeEnabled(enabled);
+        mGestureRecognizer.setGameModeEnabled(enabled);
+        if (enabled) {
+            stopTextSelectionMode();
+            mScroller.abortAnimation();
+        }
+    }
+
+    private void releaseGameMouseButton() {
+        if (mGameMouseEmulator == null) return;
+        if (mGameMouseEmulator.isMouseTrackingActive()) {
+            mGameMouseEmulator.sendMouseEvent(TerminalEmulator.MOUSE_LEFT_BUTTON,
+                mGameMouseColumn, mGameMouseRow, false);
+        }
+        mGameMouseEmulator = null;
     }
 
     @Override
@@ -677,7 +716,27 @@ public final class TerminalView extends View {
     @TargetApi(23)
     public boolean onTouchEvent(MotionEvent event) {
         if (mEmulator == null) return true;
-        final int action = event.getAction();
+        final int action = event.getActionMasked();
+        mGestureRecognizer.setGameModeEnabled(mEmulator.isGameModeEnabled());
+
+        if (!event.isFromSource(InputDevice.SOURCE_MOUSE)) {
+            if (action == MotionEvent.ACTION_DOWN) {
+                releaseGameMouseButton();
+                mGameTouchActive = mEmulator.isGameModeEnabled();
+                if (mEmulator.isGameModeEnabled() && mEmulator.isMouseTrackingActive() && !isSelectingText()) {
+                    mScroller.abortAnimation();
+                    sendMouseEventCode(event, TerminalEmulator.MOUSE_LEFT_BUTTON, true);
+                    mGameMouseEmulator = mEmulator;
+                }
+            }
+            if (mGameMouseEmulator != null) {
+                int[] position = getColumnAndRow(event, false);
+                mGameMouseColumn = position[0] + 1;
+                mGameMouseRow = position[1] + 1;
+                if (action == MotionEvent.ACTION_UP || action == MotionEvent.ACTION_CANCEL)
+                    releaseGameMouseButton();
+            }
+        }
 
         if (isSelectingText()) {
             updateFloatingToolbarVisibility(event);
@@ -703,6 +762,8 @@ public final class TerminalView extends View {
         }
 
         mGestureRecognizer.onTouchEvent(event);
+        if (action == MotionEvent.ACTION_UP || action == MotionEvent.ACTION_CANCEL)
+            mGameTouchActive = false;
         return true;
     }
 
@@ -1511,6 +1572,7 @@ public final class TerminalView extends View {
 
     @Override
     protected void onDetachedFromWindow() {
+        releaseGameMouseButton();
         super.onDetachedFromWindow();
 
         if (mTextSelectionCursorController != null) {

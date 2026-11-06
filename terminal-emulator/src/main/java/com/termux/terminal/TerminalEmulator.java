@@ -439,6 +439,9 @@ public final class TerminalEmulator {
     /** If automatic scrolling of terminal is disabled */
     private boolean mAutoScrollDisabled;
 
+    /** Scroll lock with immediate touch mouse presses and no terminal long-press selection. */
+    private boolean mGameModeEnabled;
+
     private byte mUtf8ToFollow, mUtf8Index;
     private final byte[] mUtf8InputBuffer = new byte[4];
     private int mLastEmittedCodePoint = -1;
@@ -3564,6 +3567,16 @@ public final class TerminalEmulator {
 
     public void toggleAutoScrollDisabled() {
         mAutoScrollDisabled = !mAutoScrollDisabled;
+        if (!mAutoScrollDisabled) mGameModeEnabled = false;
+    }
+
+    public boolean isGameModeEnabled() {
+        return mGameModeEnabled;
+    }
+
+    public void setGameModeEnabled(boolean enabled) {
+        mGameModeEnabled = enabled;
+        if (enabled) mAutoScrollDisabled = true;
     }
 
 

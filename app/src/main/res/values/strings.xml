@@ -241,4 +241,8 @@
     <!-- Donate Preference -->
     <string name="donate_preference_title">Donate</string>
 
+    <string name="extra_keys_scroll_lock_off">Scroll lock off</string>
+    <string name="extra_keys_scroll_lock_on">Scroll lock on</string>
+    <string name="extra_keys_game_mode">Game mode</string>
+
 </resources>

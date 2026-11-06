@@ -209,6 +209,7 @@ public final class ExtraKeysView extends GridLayout {
     protected ScheduledExecutorService mScheduledExecutor;
     protected Handler mHandler;
     protected SpecialButtonsLongHoldRunnable mSpecialButtonsLongHoldRunnable;
+    protected Runnable mLongClickRunnable;
     protected int mLongPressCount;
     protected SpecialButton mLastTappedSpecialButton;
     protected long mLastSpecialButtonTapTime;
@@ -604,6 +605,13 @@ public final class ExtraKeysView extends GridLayout {
                 mHandler = new Handler(Looper.getMainLooper());
             mSpecialButtonsLongHoldRunnable = new SpecialButtonsLongHoldRunnable(state);
             mHandler.postDelayed(mSpecialButtonsLongHoldRunnable, mLongPressTimeout);
+        } else if (button.isLongClickable()) {
+            if (mHandler == null)
+                mHandler = new Handler(Looper.getMainLooper());
+            mLongClickRunnable = () -> {
+                if (button.performLongClick()) mLongPressCount++;
+            };
+            mHandler.postDelayed(mLongClickRunnable, mLongPressTimeout);
         }
     }
 
@@ -616,6 +624,10 @@ public final class ExtraKeysView extends GridLayout {
         if (mSpecialButtonsLongHoldRunnable != null && mHandler != null) {
             mHandler.removeCallbacks(mSpecialButtonsLongHoldRunnable);
             mSpecialButtonsLongHoldRunnable = null;
+        }
+        if (mLongClickRunnable != null && mHandler != null) {
+            mHandler.removeCallbacks(mLongClickRunnable);
+            mLongClickRunnable = null;
         }
     }
 
@@ -715,6 +727,7 @@ public final class ExtraKeysView extends GridLayout {
      * views does not keep it alive. It is called by {@link #reload(ExtraKeysInfo, float)} itself.
      */
     public void releaseSpecialButtons() {
+        stopScheduledExecutors();
         for (SpecialButtonState state : mSpecialButtons.values())
             state.removeButtonsOfView(this);
     }
