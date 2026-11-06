@@ -7,7 +7,7 @@ documentation, installation instructions, and community links.
 
 ## about this fork
 
-This fork is based on a recent upstream `master` (June 2026, post-`v0.118.3`)
+This fork is based on upstream `master` through September 2026 (post-`v0.118.3`)
 and adds:
 
 - terminal graphics: Sixel and iTerm2 inline image rendering;
@@ -283,6 +283,8 @@ app version is included when available in the session environment.
 
 ### smaller changes
 
+- Scrollback position is kept per session when switching sessions, recreating
+  the activity, or opening and closing the soft keyboard.
 - OSC 52 clipboard writes accept up to 100 KB of payload (upstream limit was
   8 KB), matching Android's clipboard transaction limit; oversized sequences
   are discarded without setting the clipboard.
